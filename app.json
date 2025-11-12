@@ -1,0 +1,40 @@
+{
+  "expo": {
+    "name": "mobile-frontend-base",
+    "slug": "mobile-frontend-base",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "mobilefrontendbase",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0A1A2E"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false,
+      "softwareKeyboardLayoutMode": "pan"
+    },
+    "web": {
+      "output": "static"
+    },
+    "plugins": [
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#0A1A2E",
+          "dark": {
+            "backgroundColor": "#0A1A2E"
+          }
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    }
+  }
+}
