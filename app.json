@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "mobile-frontend-base",
-    "slug": "mobile-frontend-base",
+    "name": "bonolat-mobile",
+    "slug": "bonolat-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
     "scheme": "mobilefrontendbase",

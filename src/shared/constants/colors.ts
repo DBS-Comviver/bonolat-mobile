@@ -1,7 +1,7 @@
 export const colors = {
-    primary: "#06B6D4",
+    primary: "#1db3d1",
     secondary: "#9333EA",
-    authDark: "#0A1A2E",
+    authDark: "#13017c",
     white: "#FFFFFF",
     black: "#000000",
     gray: {

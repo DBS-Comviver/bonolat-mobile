@@ -1,10 +1,10 @@
-import React from "react";
-import { View, TouchableOpacity, StyleSheet } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { Logo } from "./Logo";
-import { useThemeColors } from "@core/hooks/useThemeColors";
 import { useAuth } from "@core/hooks/useAuth";
 import { useTheme } from "@core/hooks/useTheme";
+import { useThemeColors } from "@core/hooks/useThemeColors";
+import { Ionicons } from "@expo/vector-icons";
+import React from "react";
+import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { Logo } from "./Logo";
 
 interface HeaderProps {
     showLogout?: boolean;
@@ -46,7 +46,7 @@ export function Header({ showLogout = true, showThemeToggle = true, onLogout }: 
                         style={{
                             backgroundColor: theme === "light" 
                                 ? `${colors.white}20` 
-                                : colors.backgroundLight,
+                                : `${colors.gray[800]}20`,
                             minWidth: 44,
                             minHeight: 44,
                         }}
@@ -56,7 +56,7 @@ export function Header({ showLogout = true, showThemeToggle = true, onLogout }: 
                         <Ionicons
                             name={theme === "light" ? "moon-outline" : "sunny-outline"}
                             size={22}
-                            color={theme === "light" ? colors.white : colors.text}
+                            color={colors.white}
                         />
                     </TouchableOpacity>
                 )}
@@ -68,7 +68,7 @@ export function Header({ showLogout = true, showThemeToggle = true, onLogout }: 
                         style={{
                             backgroundColor: theme === "light"
                                 ? `${colors.white}20`
-                                : colors.errorBackground,
+                                : `${colors.gray[800]}20`,
                             minWidth: 44,
                             minHeight: 44,
                         }}
@@ -78,7 +78,7 @@ export function Header({ showLogout = true, showThemeToggle = true, onLogout }: 
                         <Ionicons 
                             name="log-out-outline" 
                             size={22} 
-                            color={theme === "light" ? colors.white : colors.error} 
+                            color={colors.error} 
                         />
                     </TouchableOpacity>
                 )}

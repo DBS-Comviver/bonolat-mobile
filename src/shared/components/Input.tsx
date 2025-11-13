@@ -1,7 +1,7 @@
-import React, { useState, forwardRef } from "react";
-import { TextInput, TextInputProps, View, TouchableOpacity, Text } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 import { useThemeColors } from "@core/hooks/useThemeColors";
+import { Ionicons } from "@expo/vector-icons";
+import React, { forwardRef, useState } from "react";
+import { NativeSyntheticEvent, Text, TextInput, TextInputFocusEventData, TextInputProps, TouchableOpacity, View } from "react-native";
 
 interface InputProps extends TextInputProps {
     label?: string;
@@ -10,10 +10,20 @@ interface InputProps extends TextInputProps {
 }
 
 export const Input = forwardRef<TextInput, InputProps>(
-    ({ label, error, secureTextEntry, ...props }, ref) => {
+    ({ label, error, secureTextEntry, onFocus, onBlur, ...props }, ref) => {
         const [isPasswordVisible, setIsPasswordVisible] = useState(false);
         const [isFocused, setIsFocused] = useState(false);
         const colors = useThemeColors();
+
+        const handleFocus = (e: NativeSyntheticEvent<TextInputFocusEventData>) => {
+            setIsFocused(true);
+            onFocus?.(e);
+        };
+
+        const handleBlur = (e: NativeSyntheticEvent<TextInputFocusEventData>) => {
+            setIsFocused(false);
+            onBlur?.(e);
+        };
 
         return (
             <View className="mb-4">
@@ -36,8 +46,8 @@ export const Input = forwardRef<TextInput, InputProps>(
                         style={{ color: colors.inputText }}
                         placeholderTextColor={colors.inputPlaceholder}
                         secureTextEntry={secureTextEntry && !isPasswordVisible}
-                        onFocus={() => setIsFocused(true)}
-                        onBlur={() => setIsFocused(false)}
+                        onFocus={handleFocus}
+                        onBlur={handleBlur}
                         {...props}
                     />
                     {secureTextEntry && (
