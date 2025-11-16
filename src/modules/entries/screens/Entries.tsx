@@ -2,7 +2,7 @@ import React from "react";
 import { View, TouchableOpacity } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
+import SimpleLineIcons from '@expo/vector-icons/SimpleLineIcons';
 import { DefaultLayout } from "@shared/layouts/DefaultLayout";
 import { Text } from "@shared/components";
 import { useThemeColors } from "@core/hooks/useThemeColors";
@@ -10,19 +10,27 @@ import { RootStackParamList } from "@/types/navigation";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
-function Home() {
+export function Entries() {
     const navigation = useNavigation<NavigationProp>();
     const colors = useThemeColors();
 
-    const handleEntriesPress = () => {
-        navigation.navigate("Entries");
+    const handleFractionationPress = () => {
+        navigation.navigate("Fractionation");
+    };
+
+    const handleMenuPress = () => {
+        navigation.goBack();
     };
 
     return (
-        <DefaultLayout>
+        <DefaultLayout 
+            headerTitle="Entradas"
+            showMenu={true}
+            onMenuPress={handleMenuPress}
+        >
             <View className="flex-1 items-center justify-start px-6 pt-8">
                 <TouchableOpacity
-                    onPress={handleEntriesPress}
+                    onPress={handleFractionationPress}
                     className="rounded-2xl items-center justify-center p-8"
                     style={{
                         backgroundColor: colors.blue[900],
@@ -31,8 +39,8 @@ function Home() {
                     }}
                     activeOpacity={0.8}
                 >
-                    <FontAwesome6
-                        name="list-check"
+                    <SimpleLineIcons
+                        name="social-dropbox"
                         size={64}
                         color={colors.white}
                         style={{ marginBottom: 16 }}
@@ -41,7 +49,7 @@ function Home() {
                         className="font-semibold text-xl text-center"
                         style={{ color: colors.white }}
                     >
-                        Entradas
+                        Fracionamento
                     </Text>
                 </TouchableOpacity>
             </View>
@@ -49,4 +57,3 @@ function Home() {
     );
 }
 
-export default Home;
