@@ -1,5 +1,5 @@
-import { useTheme } from "./useTheme";
 import { colors } from "@shared/constants/colors";
+import { useTheme } from "./useTheme";
 
 export function useThemeColors() {
     const { theme } = useTheme();
@@ -10,7 +10,7 @@ export function useThemeColors() {
         secondary: colors.secondary,
         background: isDark ? colors.authDark : colors.white,
         backgroundLight: isDark ? colors.gray[800] : colors.gray[50],
-        headerBackground: isDark ? colors.authDark : colors.blue[800],
+        headerBackground: isDark ? colors.authDark : colors.blue[900],
         text: isDark ? colors.white : colors.black,
         textSecondary: isDark ? colors.gray[300] : colors.gray[600],
         textMuted: isDark ? colors.gray[400] : colors.gray[500],
