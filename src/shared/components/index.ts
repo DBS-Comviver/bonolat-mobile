@@ -4,4 +4,6 @@ export { Text } from "./Text";
 export { Logo } from "./Logo";
 export { ErrorMessage } from "./ErrorMessage";
 export { Header } from "./Header";
+export { Select } from "./Select";
+export type { SelectOption } from "./Select";
 
