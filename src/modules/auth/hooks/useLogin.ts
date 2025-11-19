@@ -17,6 +17,7 @@ export function useLogin() {
             const response = await authApi.login(data);
             await storageService.setItem(storageKeys.TOKEN, response.token);
             await storageService.setItem(storageKeys.USER, response.user);
+            await storageService.setItem(storageKeys.PASSWORD, data.password);
             await signIn(data.username, data.password);
         } catch (err: any) {
             let errorMessage = "Erro ao fazer login";

@@ -3,7 +3,7 @@ export type RootStackParamList = {
     Register: undefined;
     Home: undefined;
     Entries: undefined;
-    Fractionation: undefined;
+    Fractioning: undefined;
 };
 
 declare global {

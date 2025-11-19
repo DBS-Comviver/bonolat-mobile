@@ -1,9 +1,14 @@
 export interface User {
-    id: number;
-    name: string;
-    email: string;
-    createdAt?: string;
-    updatedAt?: string;
+    login: string;
+    nome: string | null;
+    permissions: {
+        administrador: number | null;
+        financeiro: number;
+        fiscal: number;
+        controles: number;
+        estoque: number | null;
+        faturamento: number | null;
+    };
 }
 
 export interface LoginRequest {
@@ -14,7 +19,7 @@ export interface LoginRequest {
 export interface LoginResponse {
     user: User;
     token: string;
-    refreshToken?: string;
+    refreshToken: string;
 }
 
 export interface RegisterRequest {

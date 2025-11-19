@@ -14,8 +14,8 @@ export function Entries() {
     const navigation = useNavigation<NavigationProp>();
     const colors = useThemeColors();
 
-    const handleFractionationPress = () => {
-        navigation.navigate("Fractionation");
+    const handleFractioningPress = () => {
+        navigation.navigate("Fractioning");
     };
 
     const handleMenuPress = () => {
@@ -30,7 +30,7 @@ export function Entries() {
         >
             <View className="flex-1 items-center justify-start px-6 pt-8">
                 <TouchableOpacity
-                    onPress={handleFractionationPress}
+                    onPress={handleFractioningPress}
                     className="rounded-2xl items-center justify-center p-8"
                     style={{
                         backgroundColor: colors.blue[900],

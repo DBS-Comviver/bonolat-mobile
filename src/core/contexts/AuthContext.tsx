@@ -1,12 +1,7 @@
 import React, { createContext, useState, useEffect, ReactNode } from "react";
 import { storageService } from "@core/services/storage/storageService";
 import { storageKeys } from "@core/services/storage/storageKeys";
-
-interface User {
-    id: number;
-    name: string;
-    username: string;
-}
+import { User } from "@modules/auth/types/auth.d";
 
 interface AuthContextProps {
     user: User | null;
@@ -60,6 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
             await storageService.removeItem(storageKeys.TOKEN);
             await storageService.removeItem(storageKeys.USER);
+            await storageService.removeItem(storageKeys.PASSWORD);
             setUser(null);
         } catch (error) {
             throw error;
