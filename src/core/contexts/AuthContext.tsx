@@ -1,7 +1,8 @@
-import React, { createContext, useState, useEffect, ReactNode } from "react";
-import { storageService } from "@core/services/storage/storageService";
 import { storageKeys } from "@core/services/storage/storageKeys";
+import { storageService } from "@core/services/storage/storageService";
+import { authApi } from "@modules/auth/api/auth.api";
 import { User } from "@modules/auth/types/auth.d";
+import React, { createContext, ReactNode, useEffect, useState } from "react";
 
 interface AuthContextProps {
     user: User | null;
@@ -53,11 +54,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const signOut = async () => {
         try {
+            try {
+                await authApi.logout();
+            } catch (apiError) {
+                console.warn("Logout API call failed, proceeding with local logout:", apiError);
+            }
             await storageService.removeItem(storageKeys.TOKEN);
             await storageService.removeItem(storageKeys.USER);
             await storageService.removeItem(storageKeys.PASSWORD);
             setUser(null);
         } catch (error) {
+            console.error("Error during logout:", error);
+            setUser(null);
             throw error;
         }
     };
