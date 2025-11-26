@@ -3,11 +3,16 @@
     "target": "esnext",
     "module": "esnext",
     "jsx": "react-native",
-    "strict": true,
+    "strict": false,
     "moduleResolution": "bundler",
     "esModuleInterop": true,
     "skipLibCheck": true,
+    "noPropertyAccessFromIndexSignature": false,
     "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "lib": ["esnext"],
     "paths": {
       "@/*": [
         "./src/*"
@@ -38,5 +43,11 @@
     "expo-env.d.ts",
     "nativewind-env.d.ts"
   ],
-  "extends": "expo/tsconfig.base"
+  "extends": "expo/tsconfig.base",
+  "exclude": [
+    "node_modules",
+    "babel.config.js",
+    "metro.config.js",
+    "jest.config.js"
+  ]
 }

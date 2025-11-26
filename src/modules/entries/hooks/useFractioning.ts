@@ -1,228 +1,127 @@
-import { useState, useEffect, useCallback } from "react";
+import { SelectOption } from "@shared/components/Select";
+import { useState } from "react";
 import { Alert } from "react-native";
 import { fractioningApi } from "../api/fractioning.api";
+import { useFractioningContext } from "../context/useFractioningContext";
 import {
-	FractioningItemResponse,
-	FractioningDepositResponse,
-	FractioningLocationResponse,
+	ExpectedItem,
 	FractioningBatchResponse,
-	FractioningBoxResponse,
+	FractioningFinalizeData,
 	FractioningItem,
 	FractioningItemDetail,
-	FractioningFinalizeData,
+	FractioningItemResponse,
 } from "../types/fractioning";
-import { SelectOption } from "@shared/components/Select";
-import { storageService } from "@core/services/storage/storageService";
-
-const STORAGE_KEY = "fractioning_context";
-const ESTABLISHMENTS = [
-	{ label: "2201", value: "2201" },
-	{ label: "2202", value: "2202" },
-];
+import { formatDate, getReadDate, getToday } from "../utils/dateUtils";
+import { createBoxItem, createFractioningItem } from "../utils/itemUtils";
+import { validateDateFields, validateItemStatus } from "../utils/validationUtils";
 
 interface UseFractioningReturn {
-	establishmentOptions: SelectOption[];
 	depositOptions: SelectOption[];
 	locationOptions: SelectOption[];
 	batchOptions: SelectOption[];
-	cod_estabel?: string;
+	cod_estabel: string;
 	cod_deposito?: string;
 	cod_local?: string;
 	it_codigo?: string;
-	cod_lote?: string;
 	setCodEstabel: (value: string) => void;
 	setCodDeposito: (value: string) => void;
 	setCodLocal: (value: string) => void;
 	setItCodigo: (value: string) => void;
-	setCodLote: (value: string) => void;
 
 	itemInfo: FractioningItemResponse | null;
 	searchItem: () => Promise<void>;
 	loadingItem: boolean;
 	itemError?: string;
 
-	deposits: FractioningDepositResponse[];
-	loadingDeposits: boolean;
-
-	locations: FractioningLocationResponse[];
-	loadingLocations: boolean;
-
 	batches: FractioningBatchResponse[];
 	loadingBatches: boolean;
 	loadBatches: () => Promise<void>;
 
-	boxReturn: FractioningBoxResponse | null;
-	loadingBoxReturn: boolean;
-	loadBoxReturn: (quantidade: number) => Promise<void>;
-
 	fractioningItems: FractioningItem[];
-	addItem: (item: FractioningItemResponse) => void;
+	boxItems: FractioningItem[];
+	addItem: (item: FractioningItemResponse, cod_lote?: string, data_lote?: string, quantidade?: number, validade?: string, expectedQuantity?: number) => Promise<void>;
 	updateItemDetails: (itemId: string, details: FractioningItemDetail[]) => void;
 	deleteItem: (itemId: string) => void;
-	addDetailRow: (itemId: string) => void;
-	deleteDetailRow: (itemId: string, detailId: string) => void;
 
+	lote: string;
+	quantidadeCaixas: string;
+	ordemProducao: string;
+	batelada: string;
+	loadingExpectedItems: boolean;
+	expectedItems: ExpectedItem[];
+	setLote: (lote: string) => void;
+	setQuantidadeCaixas: (qty: string) => void;
+	setOrdemProducao: (ordemProducao: string) => void;
+	setBatelada: (batelada: string) => void;
+	loadExpectedItems: () => Promise<void>;
+
+	boxCode?: string;
+	setBoxCode: (code: string | undefined) => void;
 	showQRScanner: boolean;
-	openQRScanner: () => void;
+	openQRScanner: (type?: "box" | "item" | "lot") => void;
 	closeQRScanner: () => void;
-	handleQRScan: (data: string) => void;
+	handleQRScan: (data: string) => Promise<void>;
+	handleBoxCodeEntered: (code: string) => Promise<void>;
+	qrScanType: "box" | "item" | "lot";
 
-	validateQuantities: () => boolean;
 	validateRequiredFields: () => boolean;
-
+	canFinalize: () => boolean;
 	finalizeFractioning: () => Promise<void>;
 	loadingFinalize: boolean;
 }
 
 export function useFractioning(): UseFractioningReturn {
-	const [cod_estabel, setCodEstabelState] = useState<string | undefined>();
-	const [cod_deposito, setCodDepositoState] = useState<string | undefined>();
-	const [cod_local, setCodLocalState] = useState<string | undefined>();
 	const [it_codigo, setItCodigoState] = useState<string | undefined>();
-	const [cod_lote, setCodLoteState] = useState<string | undefined>();
-
 	const [itemInfo, setItemInfo] = useState<FractioningItemResponse | null>(null);
 	const [loadingItem, setLoadingItem] = useState(false);
 	const [itemError, setItemError] = useState<string | undefined>();
 
-	const [deposits, setDeposits] = useState<FractioningDepositResponse[]>([]);
-	const [loadingDeposits, setLoadingDeposits] = useState(false);
-
-	const [locations, setLocations] = useState<FractioningLocationResponse[]>([]);
-	const [loadingLocations, setLoadingLocations] = useState(false);
-
 	const [batches, setBatches] = useState<FractioningBatchResponse[]>([]);
 	const [loadingBatches, setLoadingBatches] = useState(false);
 
-	const [boxReturn, setBoxReturn] = useState<FractioningBoxResponse | null>(null);
-	const [loadingBoxReturn, setLoadingBoxReturn] = useState(false);
-
 	const [fractioningItems, setFractioningItems] = useState<FractioningItem[]>([]);
+	const [boxItems, setBoxItems] = useState<FractioningItem[]>([]);
+	const [boxCode, setBoxCode] = useState<string | undefined>();
 
 	const [showQRScanner, setShowQRScanner] = useState(false);
-	const [qrScanType, setQrScanType] = useState<"item" | "lot">("item");
+	const [qrScanType, setQrScanType] = useState<"box" | "item" | "lot">("box");
 
 	const [loadingFinalize, setLoadingFinalize] = useState(false);
 
-	useEffect(() => {
-		loadContextFromStorage();
-	}, []);
+	const [lote, setLoteState] = useState<string>("");
+	const [quantidadeCaixas, setQuantidadeCaixasState] = useState<string>("");
+	const [ordemProducao, setOrdemProducaoState] = useState<string>("");
+	const [batelada, setBateladaState] = useState<string>("");
+	const [loadingExpectedItems, setLoadingExpectedItems] = useState(false);
+	const [expectedItems, setExpectedItems] = useState<ExpectedItem[]>([]);
 
-	useEffect(() => {
-		if (cod_estabel || cod_deposito || cod_local || it_codigo || cod_lote) {
-			saveContextToStorage();
-		}
-	}, [cod_estabel, cod_deposito, cod_local, it_codigo, cod_lote]);
-
-	useEffect(() => {
-		if (cod_estabel && it_codigo) {
-			loadDeposits();
-		} else {
-			setDeposits([]);
-		}
-	}, [cod_estabel, it_codigo]);
-
-	useEffect(() => {
-		if (cod_estabel && it_codigo && cod_deposito) {
-			loadLocations();
-		} else {
-			setLocations([]);
-		}
-	}, [cod_estabel, it_codigo, cod_deposito]);
-
-	const loadContextFromStorage = async () => {
-		try {
-			const stored = await storageService.getItem<{
-				cod_estabel?: string;
-				cod_deposito?: string;
-				cod_local?: string;
-				it_codigo?: string;
-				cod_lote?: string;
-			}>(STORAGE_KEY);
-			if (stored) {
-				setCodEstabelState(stored.cod_estabel);
-				setCodDepositoState(stored.cod_deposito);
-				setCodLocalState(stored.cod_local);
-				setItCodigoState(stored.it_codigo);
-				setCodLoteState(stored.cod_lote);
-			}
-		} catch (error) {
-			console.error("Error loading context from storage:", error);
-		}
-	};
-
-	const saveContextToStorage = async () => {
-		try {
-			await storageService.setItem(STORAGE_KEY, {
-				cod_estabel,
-				cod_deposito,
-				cod_local,
-				it_codigo,
-				cod_lote,
-			});
-		} catch (error) {
-			console.error("Error saving context to storage:", error);
-		}
-	};
-
-	const loadDeposits = async () => {
-		if (!cod_estabel || !it_codigo) {
-			setDeposits([]);
-			return;
-		}
-
-		setLoadingDeposits(true);
-		try {
-			const data = await fractioningApi.getDeposits(cod_estabel, it_codigo);
-			setDeposits(data);
-		} catch (error: any) {
-			console.error("Error loading deposits:", error);
-			Alert.alert("Erro", error.response?.data?.error?.message || "Erro ao carregar depósitos");
-			setDeposits([]);
-		} finally {
-			setLoadingDeposits(false);
-		}
-	};
-
-	const loadLocations = async () => {
-		if (!cod_estabel || !it_codigo || !cod_deposito) {
-			setLocations([]);
-			return;
-		}
-
-		setLoadingLocations(true);
-		try {
-			const data = await fractioningApi.getLocations(cod_estabel, it_codigo, cod_deposito);
-			setLocations(data);
-		} catch (error: any) {
-			console.error("Error loading locations:", error);
-			Alert.alert("Erro", error.response?.data?.error?.message || "Erro ao carregar localizações");
-			setLocations([]);
-		} finally {
-			setLoadingLocations(false);
-		}
-	};
+	const context = useFractioningContext(boxCode);
 
 	const loadBatches = async () => {
-		if (!cod_estabel || !it_codigo || !cod_deposito) {
-			Alert.alert("Atenção", "Preencha estabelecimento, item e depósito");
+		if (!context.cod_estabel || !it_codigo || !context.cod_deposito || !context.cod_local) {
 			return;
 		}
 
 		setLoadingBatches(true);
 		try {
-			const data = await fractioningApi.getBatches(cod_estabel, it_codigo, cod_deposito);
-			setBatches(data);
+			const data = await fractioningApi.getBatches(context.cod_estabel, it_codigo, context.cod_deposito, context.cod_local);
+			const formattedBatch = {
+				...data,
+				dt_lote: formatDate(data.dt_lote),
+			};
+			setBatches([formattedBatch]);
 		} catch (error: any) {
 			console.error("Error loading batches:", error);
 			Alert.alert("Erro", error.response?.data?.error?.message || "Erro ao carregar lotes");
+			setBatches([]);
 		} finally {
 			setLoadingBatches(false);
 		}
 	};
 
 	const searchItem = async () => {
-		if (!it_codigo?.trim()) {
+		const codeToSearch = it_codigo?.trim();
+		if (!codeToSearch) {
 			setItemError("Digite ou escaneie o código do item");
 			return;
 		}
@@ -231,8 +130,13 @@ export function useFractioning(): UseFractioningReturn {
 		setItemError(undefined);
 
 		try {
-			const data = await fractioningApi.getItem(it_codigo.trim());
+			const data = await fractioningApi.getItem(codeToSearch);
 			setItemInfo(data);
+			setItemError(undefined);
+
+			if (context.cod_estabel && context.cod_deposito) {
+				loadBatches();
+			}
 		} catch (error: any) {
 			setItemError(error.response?.data?.error?.message || "Erro ao buscar item");
 			setItemInfo(null);
@@ -241,98 +145,41 @@ export function useFractioning(): UseFractioningReturn {
 		}
 	};
 
-	const loadBoxReturn = async (quantidade: number) => {
-		if (!cod_estabel || !it_codigo || !cod_deposito || !cod_local || !cod_lote) {
-			Alert.alert("Atenção", "Preencha todos os campos de contexto");
-			return;
-		}
-
-		setLoadingBoxReturn(true);
-		try {
-			const data = await fractioningApi.getBoxReturn(
-				cod_estabel,
-				it_codigo,
-				cod_deposito,
-				cod_local,
-				cod_lote,
-				quantidade
-			);
-			setBoxReturn(data);
-		} catch (error: any) {
-			console.error("Error loading box return:", error);
-			Alert.alert("Erro", error.response?.data?.error?.message || "Erro ao carregar retorno da caixa");
-		} finally {
-			setLoadingBoxReturn(false);
-		}
-	};
-
-	const setCodEstabel = (value: string) => {
-		setCodEstabelState(value);
-		setCodDepositoState(undefined);
-		setCodLocalState(undefined);
-		setCodLoteState(undefined);
-		setDeposits([]);
-		setLocations([]);
-		setBatches([]);
-	};
-
-	const setCodDeposito = (value: string) => {
-		setCodDepositoState(value);
-		setCodLocalState(undefined);
-		setCodLoteState(undefined);
-		setLocations([]);
-		setBatches([]);
-	};
-
-	const setCodLocal = (value: string) => {
-		setCodLocalState(value);
-		setCodLoteState(undefined);
-		setBatches([]);
-	};
-
 	const setItCodigo = (value: string) => {
 		setItCodigoState(value);
 		setItemInfo(null);
 		setItemError(undefined);
 	};
 
-	const setCodLote = (value: string) => {
-		setCodLoteState(value);
-	};
-
-	const addItem = (item: FractioningItemResponse) => {
-		const alreadyAdded = fractioningItems.some((fi) => fi.it_codigo === item.it_codigo);
-		if (alreadyAdded) {
-			Alert.alert("Atenção", "Este item já foi adicionado");
+	const addItem = async (
+		item: FractioningItemResponse,
+		cod_lote?: string,
+		data_lote?: string,
+		quantidade?: number,
+		validade?: string,
+		expectedQuantity?: number
+	) => {
+		if (!context.cod_estabel || !context.cod_deposito || !context.cod_local || !cod_lote || !quantidade || !validade) {
+			Alert.alert("Atenção", "Preencha todos os campos necessários");
 			return;
 		}
 
-		const now = new Date();
-		const dateStr = now.toLocaleDateString("pt-BR");
-		const timeStr = now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
-
-		const newItem: FractioningItem = {
-			id: `item-${Date.now()}`,
-			it_codigo: item.it_codigo,
-			desc_item: item.desc_item,
-			expectedQuantity: 0,
-			details: [
-				{
-					id: `detail-${Date.now()}`,
-					quantidade: 0,
-					cod_lote: "",
-					validade: "",
-					data_lote: "",
-				},
-			],
-		};
-
-		setFractioningItems((prev) => [...prev, newItem]);
+		const newItem = createFractioningItem(item, cod_lote, data_lote || "", quantidade, validade, expectedQuantity || 0);
+		const newStatus = validateItemStatus(newItem);
+		const validatedItem = { ...newItem, validationStatus: newStatus };
+		setFractioningItems((prev) => [...prev, validatedItem]);
 	};
 
 	const updateItemDetails = (itemId: string, details: FractioningItemDetail[]) => {
 		setFractioningItems((prev) =>
-			prev.map((item) => (item.id === itemId ? { ...item, details } : item))
+			prev.map((item) => {
+				if (item.id === itemId) {
+					const updatedItem = { ...item, details };
+					const newStatus = validateItemStatus(updatedItem);
+					return { ...updatedItem, validationStatus: newStatus };
+				}
+				return item;
+			})
 		);
 	};
 
@@ -353,42 +200,7 @@ export function useFractioning(): UseFractioningReturn {
 		);
 	};
 
-	const addDetailRow = (itemId: string) => {
-		setFractioningItems((prev) =>
-			prev.map((item) =>
-				item.id === itemId
-					? {
-							...item,
-							details: [
-								...item.details,
-								{
-									id: `detail-${Date.now()}-${Math.random()}`,
-									quantidade: 0,
-									cod_lote: "",
-									validade: "",
-									data_lote: "",
-								},
-							],
-					  }
-					: item
-			)
-		);
-	};
-
-	const deleteDetailRow = (itemId: string, detailId: string) => {
-		setFractioningItems((prev) =>
-			prev.map((item) =>
-				item.id === itemId
-					? {
-							...item,
-							details: item.details.filter((detail) => detail.id !== detailId),
-					  }
-					: item
-			)
-		);
-	};
-
-	const openQRScanner = (type: "item" | "lot" = "item") => {
+	const openQRScanner = (type: "box" | "item" | "lot" = "box") => {
 		setQrScanType(type);
 		setShowQRScanner(true);
 	};
@@ -397,28 +209,139 @@ export function useFractioning(): UseFractioningReturn {
 		setShowQRScanner(false);
 	};
 
-	const handleQRScan = (data: string) => {
-		closeQRScanner();
-		if (qrScanType === "item") {
-			setItCodigo(data);
-		} else if (qrScanType === "lot") {
-			setCodLote(data);
+	const processBoxCode = async (boxCodeData: string) => {
+		if (!boxCodeData || !boxCodeData.trim()) {
+			Alert.alert("Atenção", "Digite o código da caixa");
+			return;
+		}
+
+		const trimmedCode = boxCodeData.trim();
+		setBoxCode(trimmedCode);
+		setLoadingItem(true);
+		setItemError(undefined);
+		setFractioningItems([]);
+		setBoxItems([]);
+		setExpectedItems([]);
+
+		const scannedData = fractioningApi.parseScannedCode(trimmedCode);
+		if (scannedData && scannedData.lote) {
+			setLoteState(scannedData.lote);
+		} else {
+			const lotMatch = trimmedCode.match(/10(\d+)/);
+			if (lotMatch) {
+				setLoteState(lotMatch[1]);
+			} else {
+				setLoteState("");
+			}
+		}
+
+		try {
+			const response = await fractioningApi.getBoxItems(trimmedCode);
+			if (response && response.box_code) {
+				setItemError(undefined);
+			} else {
+				setItemError("Código da caixa inválido");
+			}
+		} catch (error: any) {
+			console.error("Erro ao validar código da caixa:", error);
+			const errorMessage = error?.response?.data?.error?.message || error?.message || "Erro ao validar código da caixa";
+			setItemError(errorMessage);
+			Alert.alert("Erro", errorMessage);
+		} finally {
+			setLoadingItem(false);
 		}
 	};
 
-	const validateQuantities = (): boolean => {
-		for (const item of fractioningItems) {
-			const total = item.details.reduce((sum, detail) => sum + (detail.quantidade || 0), 0);
-			if (item.expectedQuantity > 0 && Math.abs(total - item.expectedQuantity) > 0.0001) {
-				return false;
-			}
+	const handleQRScan = async (data: string) => {
+		closeQRScanner();
+		if (qrScanType === "box") {
+			await processBoxCode(data);
+		} else if (qrScanType === "item") {
+			setItCodigo(data);
 		}
-		return true;
+	};
+
+	const setLote = (value: string) => {
+		setLoteState(value);
+		setBoxItems([]);
+		setFractioningItems([]);
+		setExpectedItems([]);
+	};
+
+	const setQuantidadeCaixas = (value: string) => {
+		setQuantidadeCaixasState(value);
+		setBoxItems([]);
+		setFractioningItems([]);
+		setExpectedItems([]);
+	};
+
+	const setOrdemProducao = (value: string) => {
+		setOrdemProducaoState(value);
+	};
+
+	const setBatelada = (value: string) => {
+		setBateladaState(value);
+	};
+
+	const loadExpectedItems = async () => {
+		if (!context.cod_estabel || !context.cod_deposito || !context.cod_local || !lote || !quantidadeCaixas) {
+			Alert.alert("Atenção", "Preencha o contexto, lote e quantidade de caixas");
+			return;
+		}
+
+		const qty = parseFloat(quantidadeCaixas.replace(",", "."));
+		if (isNaN(qty) || qty <= 0) {
+			Alert.alert("Atenção", "Quantidade de caixas inválida");
+			return;
+		}
+
+		setLoadingExpectedItems(true);
+		try {
+			const data = await fractioningApi.getExpectedItems(
+				context.cod_estabel,
+				context.cod_deposito,
+				context.cod_local,
+				lote,
+				qty
+			);
+
+			if (!data || !data.items || data.items.length === 0) {
+				Alert.alert("Atenção", "Nenhum item esperado encontrado");
+				setExpectedItems([]);
+				setBoxItems([]);
+				return;
+			}
+
+			setExpectedItems(data.items);
+
+			const boxReadDate = getReadDate();
+			const newItems: FractioningItem[] = data.items.map((item, index) => {
+				const boxItem = createBoxItem(item.it_codigo, item.desc_item, item.quant_usada);
+				boxItem.readDate = boxReadDate;
+				return boxItem;
+			});
+
+			setBoxItems(newItems);
+			setFractioningItems([]);
+		} catch (error: any) {
+			console.error("Erro ao buscar itens esperados:", error);
+			const errorMessage = error?.response?.data?.error?.message || error?.message || "Erro ao buscar itens esperados";
+			Alert.alert("Erro", errorMessage);
+			setExpectedItems([]);
+			setBoxItems([]);
+		} finally {
+			setLoadingExpectedItems(false);
+		}
 	};
 
 	const validateRequiredFields = (): boolean => {
-		if (!cod_estabel || !cod_deposito || !cod_local || !it_codigo || !cod_lote) {
-			Alert.alert("Atenção", "Preencha todos os campos de contexto");
+		if (!boxCode) {
+			Alert.alert("Atenção", "Informe o código da caixa");
+			return false;
+		}
+
+		if (!context.cod_estabel || !context.cod_deposito || !context.cod_local) {
+			Alert.alert("Atenção", "Preencha estabelecimento, depósito e localização");
 			return false;
 		}
 
@@ -456,99 +379,174 @@ export function useFractioning(): UseFractioningReturn {
 		return true;
 	};
 
+	const canFinalize = (): boolean => {
+		if (!context.cod_estabel || !context.cod_deposito || !context.cod_local) return false;
+		if (!boxCode) return false;
+		if (fractioningItems.length === 0) return false;
+
+		for (const item of fractioningItems) {
+			if (item.details.length === 0) return false;
+
+			for (const detail of item.details) {
+				if (!detail.quantidade || detail.quantidade <= 0) return false;
+				if (!detail.cod_lote) return false;
+				if (!detail.validade) return false;
+				if (!detail.data_lote) return false;
+			}
+		}
+
+		return true;
+	};
+
 	const finalizeFractioning = async () => {
 		if (!validateRequiredFields()) {
 			return;
 		}
 
+		const today = getToday();
+
+		for (const item of fractioningItems) {
+			for (const detail of item.details) {
+				if (!validateDateFields(item.it_codigo, detail)) {
+					return;
+				}
+			}
+		}
+
 		setLoadingFinalize(true);
 
 		try {
-			const itemsToSend: FractioningFinalizeData[] = [];
+			if (!boxCode) {
+				Alert.alert("Erro", "Código da caixa não informado");
+				return;
+			}
+
+			const dadosBaixaItems: string[] = [];
 
 			for (const item of fractioningItems) {
 				for (const detail of item.details) {
-					itemsToSend.push({
-						cod_estabel: cod_estabel!,
-						it_codigo: item.it_codigo,
-						cod_deposito: cod_deposito!,
-						cod_local: cod_local!,
-						cod_lote: detail.cod_lote!,
-						quantidade: detail.quantidade,
-						validade: detail.validade!,
-						data_lote: detail.data_lote!,
-					});
+					if (!detail.cod_lote || !detail.quantidade || !detail.validade || !detail.data_lote) {
+						Alert.alert(
+							"Erro",
+							`Item ${item.it_codigo}: Alguns campos obrigatórios não estão preenchidos. Verifique lote, quantidade, validade e data de fabricação.`
+						);
+						return;
+					}
+
+					const quantidadeStr = detail.quantidade.toString().replace(".", ",");
+					const itemData = `${item.it_codigo},${quantidadeStr},${detail.cod_lote},${detail.data_lote},${detail.validade}`;
+					dadosBaixaItems.push(itemData);
 				}
 			}
 
-			for (const itemData of itemsToSend) {
-				await fractioningApi.finalizeFractioning(itemData);
+			if (dadosBaixaItems.length === 0) {
+				Alert.alert("Erro", "Nenhum item para finalizar");
+				return;
 			}
 
-			Alert.alert("Sucesso", "Desmontagem finalizada com sucesso!", [
-				{
-					text: "OK",
-					onPress: () => {
-						setItCodigo(undefined);
-						setItemInfo(null);
-						setBoxReturn(null);
-						setFractioningItems([]);
-					},
-				},
-			]);
+			const dadosBaixa = dadosBaixaItems.join(";");
+			const lotePrincipal = fractioningItems[0]?.details[0]?.cod_lote || "";
+			const quantidadeTotal = fractioningItems.reduce((sum, item) => {
+				return sum + item.details.reduce((itemSum, detail) => itemSum + (detail.quantidade || 0), 0);
+			}, 0);
+
+			const finalizeData: FractioningFinalizeData = {
+				cod_estabel: context.cod_estabel!,
+				it_codigo: boxCode,
+				cod_deposito: context.cod_deposito!,
+				cod_local: context.cod_local!,
+				cod_lote: lotePrincipal,
+				quantidade: quantidadeTotal,
+				dados_baixa: dadosBaixa,
+				ordem_producao: ordemProducao.trim() || undefined,
+				batelada: batelada.trim() || undefined,
+			};
+
+			try {
+				const response = await fractioningApi.finalizeFractioning(finalizeData);
+
+				if (response.desc_erro && !response.desc_erro.includes("OK")) {
+					Alert.alert("Erro", `Erro ao finalizar desmontagem:\n\n${response.desc_erro}`);
+					setLoadingFinalize(false);
+					return;
+				}
+			} catch (error: any) {
+				Alert.alert(
+					"Erro",
+					`Erro ao finalizar desmontagem:\n\n${error.response?.data?.error?.message || error.message || "Erro desconhecido"}`
+				);
+				setLoadingFinalize(false);
+				return;
+			}
+
+			setItCodigo(undefined);
+			setItemInfo(null);
+			setFractioningItems([]);
+			setBoxItems([]);
+			setBoxCode(undefined);
+			setLoteState("");
+			setQuantidadeCaixasState("");
+			setOrdemProducaoState("");
+			setBateladaState("");
+			setExpectedItems([]);
+			context.reset();
+			setBatches([]);
+			setItemError(undefined);
+
+			Alert.alert("Sucesso", "Desmontagem finalizada com sucesso!", [{ text: "OK" }]);
 		} catch (error: any) {
-			Alert.alert(
-				"Erro",
-				error.response?.data?.error?.message || "Erro ao finalizar desmontagem"
-			);
+			Alert.alert("Erro", error.response?.data?.error?.message || "Erro ao finalizar desmontagem");
 		} finally {
 			setLoadingFinalize(false);
 		}
 	};
 
 	return {
-		establishmentOptions: ESTABLISHMENTS,
-		depositOptions: deposits.map((d) => ({ label: d.nome, value: d.cod_depos })),
-		locationOptions: locations.map((l) => ({ label: l.nome, value: l.cod_local })),
+		depositOptions: context.deposits.map((d) => ({ label: d.nome, value: d.cod_depos })),
+		locationOptions: context.locations.map((l) => ({ label: l.nome, value: l.cod_local })),
 		batchOptions: batches.map((b) => ({ label: `${b.lote} - ${b.dt_lote}`, value: b.lote })),
-		cod_estabel,
-		cod_deposito,
-		cod_local,
+		cod_estabel: context.cod_estabel,
+		cod_deposito: context.cod_deposito,
+		cod_local: context.cod_local,
 		it_codigo,
-		cod_lote,
-		setCodEstabel,
-		setCodDeposito,
-		setCodLocal,
+		setCodEstabel: context.setCodEstabel,
+		setCodDeposito: context.setCodDeposito,
+		setCodLocal: context.setCodLocal,
 		setItCodigo,
-		setCodLote,
 		itemInfo,
 		searchItem,
 		loadingItem,
 		itemError,
-		deposits,
-		loadingDeposits,
-		locations,
-		loadingLocations,
 		batches,
 		loadingBatches,
 		loadBatches,
-		boxReturn,
-		loadingBoxReturn,
-		loadBoxReturn,
 		fractioningItems,
+		boxItems,
 		addItem,
 		updateItemDetails,
 		deleteItem,
-		addDetailRow,
-		deleteDetailRow,
+		boxCode,
+		setBoxCode,
 		showQRScanner,
-		openQRScanner: () => openQRScanner("item"),
+		openQRScanner,
 		closeQRScanner,
 		handleQRScan,
-		validateQuantities,
+		handleBoxCodeEntered: processBoxCode,
+		qrScanType,
 		validateRequiredFields,
+		canFinalize,
 		finalizeFractioning,
 		loadingFinalize,
+		lote,
+		quantidadeCaixas,
+		ordemProducao,
+		batelada,
+		loadingExpectedItems,
+		expectedItems,
+		setLote,
+		setQuantidadeCaixas,
+		setOrdemProducao,
+		setBatelada,
+		loadExpectedItems,
 	};
 }
-

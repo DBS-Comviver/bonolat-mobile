@@ -5,19 +5,19 @@ import { CameraView, useCameraPermissions } from "expo-camera";
 import React, { useEffect, useState } from "react";
 import { Modal, StyleSheet, TouchableOpacity, View } from "react-native";
 
-interface QRCodeScannerProps {
+interface CodeScannerProps {
     visible: boolean;
     onScan: (data: string) => void;
     onClose: () => void;
     title?: string;
 }
 
-export function QRCodeScanner({
+export function CodeScanner({
     visible,
     onScan,
     onClose,
     title = "Escaneie o código",
-}: QRCodeScannerProps) {
+}: CodeScannerProps) {
     const colors = useThemeColors();
     const [permission, requestPermission] = useCameraPermissions();
     const [scanned, setScanned] = useState(false);
@@ -28,10 +28,10 @@ export function QRCodeScanner({
         }
     }, [visible]);
 
-    const handleBarCodeScanned = ({ data }: { data: string }) => {
-        if (!scanned) {
+    const handleBarCodeScanned = (result: { data: string; type?: string }) => {
+        if (!scanned && result.data) {
             setScanned(true);
-            onScan(data);
+            onScan(result.data);
             setTimeout(() => {
                 setScanned(false);
             }, 2000);
@@ -53,15 +53,15 @@ export function QRCodeScanner({
             <Modal visible={visible} transparent animationType="slide">
                 <View style={[styles.container, { backgroundColor: colors.background }]}>
                     <Text style={{ color: colors.error }}>Sem acesso à câmera</Text>
-                    <TouchableOpacity 
-                        onPress={requestPermission} 
+                    <TouchableOpacity
+                        onPress={requestPermission}
                         className="mt-4 p-4 rounded-full"
                         style={{ backgroundColor: colors.primary }}
                     >
                         <Text style={{ color: colors.white }}>Solicitar Permissão</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity 
-                        onPress={onClose} 
+                    <TouchableOpacity
+                        onPress={onClose}
                         className="mt-2 p-4 rounded-full"
                         style={{ backgroundColor: colors.error }}
                     >
@@ -79,6 +79,71 @@ export function QRCodeScanner({
                     <Text className="text-xl font-semibold mb-2" style={{ color: colors.white }}>
                         {title}
                     </Text>
+                    <Text className="text-sm" style={{ color: colors.textMuted || "#CCCCCC" }}>
+                        Leia o código de barras
+                    </Text>
+                </View>
+
+                <View className="absolute top-1/2 left-1/2" style={{ transform: [{ translateX: -200 }, { translateY: -60 }] }}>
+                    <View
+                        style={{
+                            width: 400,
+                            height: 120,
+                            borderWidth: 3,
+                            borderColor: scanned ? colors.success || "#4CAF50" : colors.primary,
+                            borderRadius: 12,
+                            backgroundColor: "transparent",
+                        }}
+                    >
+                        <View
+                            style={{
+                                position: "absolute",
+                                top: -3,
+                                left: -3,
+                                width: 40,
+                                height: 40,
+                                borderTopWidth: 5,
+                                borderLeftWidth: 5,
+                                borderColor: scanned ? colors.success || "#4CAF50" : colors.primary,
+                            }}
+                        />
+                        <View
+                            style={{
+                                position: "absolute",
+                                top: -3,
+                                right: -3,
+                                width: 40,
+                                height: 40,
+                                borderTopWidth: 5,
+                                borderRightWidth: 5,
+                                borderColor: scanned ? colors.success || "#4CAF50" : colors.primary,
+                            }}
+                        />
+                        <View
+                            style={{
+                                position: "absolute",
+                                bottom: -3,
+                                left: -3,
+                                width: 40,
+                                height: 40,
+                                borderBottomWidth: 5,
+                                borderLeftWidth: 5,
+                                borderColor: scanned ? colors.success || "#4CAF50" : colors.primary,
+                            }}
+                        />
+                        <View
+                            style={{
+                                position: "absolute",
+                                bottom: -3,
+                                right: -3,
+                                width: 40,
+                                height: 40,
+                                borderBottomWidth: 5,
+                                borderRightWidth: 5,
+                                borderColor: scanned ? colors.success || "#4CAF50" : colors.primary,
+                            }}
+                        />
+                    </View>
                 </View>
 
                 <CameraView
@@ -86,7 +151,9 @@ export function QRCodeScanner({
                     facing="back"
                     onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
                     barcodeScannerSettings={{
-                        barcodeTypes: ["qr", "ean13", "ean8", "code128"],
+                        barcodeTypes: [
+                            "code128",
+                        ],
                     }}
                 />
 
@@ -114,4 +181,3 @@ const styles = StyleSheet.create({
         alignItems: "center",
     },
 });
-

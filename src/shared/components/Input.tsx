@@ -9,8 +9,8 @@ interface InputProps extends TextInputProps {
     secureTextEntry?: boolean;
 }
 
-export const Input = forwardRef<TextInput, InputProps>(
-    ({ label, error, secureTextEntry, onFocus, onBlur, ...props }, ref) => {
+export const Input = forwardRef<any, InputProps>(
+    ({ label, error, secureTextEntry, onFocus, onBlur, style, ...props }, ref) => {
         const [isPasswordVisible, setIsPasswordVisible] = useState(false);
         const [isFocused, setIsFocused] = useState(false);
         const colors = useThemeColors();
@@ -25,8 +25,10 @@ export const Input = forwardRef<TextInput, InputProps>(
             onBlur?.(e);
         };
 
+        const containerStyle = style && (style as any).marginBottom === 0 ? { marginBottom: 0 } : undefined;
+
         return (
-            <View className="mb-4">
+            <View className="mb-4" style={containerStyle}>
                 {label && (
                     <Text className="mb-2 text-base" style={{ color: colors.white }}>
                         {label}
@@ -74,4 +76,3 @@ export const Input = forwardRef<TextInput, InputProps>(
 );
 
 Input.displayName = "Input";
-

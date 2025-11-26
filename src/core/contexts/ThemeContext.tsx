@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
-import { useColorScheme as useDeviceScheme, Appearance } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import React, { createContext, useContext, useEffect, useState } from "react";
+import { Appearance, Platform, useColorScheme as useDeviceScheme } from "react-native";
 
 type ThemeType = "light" | "dark";
 
@@ -20,16 +20,20 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         AsyncStorage.getItem("@theme").then((saved) => {
             if (saved && (saved === "light" || saved === "dark")) {
                 setTheme(saved as ThemeType);
+                if (Platform.OS !== "web" && Appearance.setColorScheme) {
                 Appearance.setColorScheme(saved as ThemeType);
+                }
             } else {
+                if (Platform.OS !== "web" && Appearance.setColorScheme) {
                 Appearance.setColorScheme(deviceTheme ?? "light");
+                }
             }
             setIsInitialized(true);
         });
     }, [deviceTheme]);
 
     useEffect(() => {
-        if (isInitialized) {
+        if (isInitialized && Platform.OS !== "web" && Appearance.setColorScheme) {
             Appearance.setColorScheme(theme);
         }
     }, [theme, isInitialized]);
@@ -38,7 +42,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         const newTheme = theme === "light" ? "dark" : "light";
         setTheme(newTheme);
         await AsyncStorage.setItem("@theme", newTheme);
+        if (Platform.OS !== "web" && Appearance.setColorScheme) {
         Appearance.setColorScheme(newTheme);
+        }
         
         if (__DEV__) {
             console.log("Theme changed to:", newTheme);

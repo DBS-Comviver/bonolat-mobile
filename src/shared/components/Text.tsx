@@ -5,6 +5,7 @@ interface TextProps extends RNTextProps {
     variant?: "default" | "title" | "subtitle" | "caption";
     color?: string;
     className?: string;
+    children?: React.ReactNode;
 }
 
 export function Text({
@@ -12,6 +13,7 @@ export function Text({
     color,
     className = "",
     style,
+    children,
     ...props
 }: TextProps) {
     const variantStyles = {
@@ -28,7 +30,8 @@ export function Text({
             className={combinedClassName}
             style={[color && { color }, style]}
             {...props}
-        />
+        >
+            {children}
+        </RNText>
     );
 }
-
