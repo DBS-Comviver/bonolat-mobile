@@ -3,7 +3,7 @@ import { LoginRequest, LoginResponse, RegisterRequest, RegisterResponse } from "
 
 export const authApi = {
     login: async (data: LoginRequest): Promise<LoginResponse> => {
-        const response = await api.post<LoginResponse>("/auth/login", {
+        const response = await api.post<LoginResponse>("/api/auth/login", {
             username: data.username,
             password: data.password,
         });
@@ -11,16 +11,16 @@ export const authApi = {
     },
 
     register: async (data: RegisterRequest): Promise<RegisterResponse> => {
-        const response = await api.post<RegisterResponse>("/auth/register", data);
+        const response = await api.post<RegisterResponse>("/api/auth/register", data);
         return response.data;
     },
 
     logout: async (): Promise<void> => {
-        await api.post("/auth/logout");
+        await api.post("/api/auth/logout");
     },
 
     refreshToken: async (refreshToken: string): Promise<{ token: string }> => {
-        const response = await api.post<{ token: string }>("/auth/refresh", {
+        const response = await api.post<{ token: string }>("/api/auth/refresh", {
             refreshToken,
         });
         return response.data;
