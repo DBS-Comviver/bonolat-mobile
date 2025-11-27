@@ -19,6 +19,7 @@ import {
 	PrintLabelButton,
 } from "../components";
 import { useFractioning } from "../hooks/useFractioning";
+import { parseGS1Barcode } from "../utils/barcodeUtils";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -407,8 +408,8 @@ export function Fractioning() {
 			if (expandedItemId) {
 				const boxItem = boxItems.find(bi => bi.id === expandedItemId);
 				if (boxItem) {
-					const scannedData = fractioningApi.parseScannedCode(data);
-					if (scannedData) {
+					const parsed = parseGS1Barcode(data);
+					if (parsed && (parsed.item_code || parsed.lote)) {
 						const currentForms = itemFields[boxItem.id] || [];
 						const unconfirmedFormIndex = currentForms.findIndex(f => !f.added);
 						if (unconfirmedFormIndex >= 0) {
@@ -416,10 +417,8 @@ export function Fractioning() {
 								index === unconfirmedFormIndex
 									? {
 										...form,
-										itemCode: scannedData.item_code || boxItem.it_codigo,
-										lote: scannedData.lote || form.lote,
-										dataFabricacao: scannedData.data_fabricacao || form.dataFabricacao,
-										validade: scannedData.validade || form.validade,
+										itemCode: parsed.item_code || boxItem.it_codigo,
+										lote: parsed.lote || form.lote,
 									}
 									: form
 							);
@@ -432,10 +431,10 @@ export function Fractioning() {
 							const newForm = {
 								id: newFormId,
 								quantidade: "",
-								lote: scannedData.lote || "",
-								validade: scannedData.validade || "",
-								dataFabricacao: scannedData.data_fabricacao || "",
-								itemCode: scannedData.item_code || boxItem.it_codigo,
+								lote: parsed.lote || "",
+								validade: "",
+								dataFabricacao: "",
+								itemCode: parsed.item_code || boxItem.it_codigo,
 								added: false,
 							};
 							setItemFields({
@@ -448,25 +447,33 @@ export function Fractioning() {
 					}
 				}
 			} else {
-				const scannedData = fractioningApi.parseScannedCode(data);
-				if (scannedData) {
-					setManualItemCode(scannedData.item_code || data);
-					setItCodigo(scannedData.item_code || data);
-					await searchItem();
+				const parsed = parseGS1Barcode(data);
+				if (parsed && parsed.item_code) {
+					setManualItemCode(parsed.item_code);
+					setItCodigo(parsed.item_code);
 
-					if (scannedData.lote) {
-						setManualLote(scannedData.lote);
+					if (parsed.lote) {
+						setManualLote(parsed.lote);
+					} else {
+						setManualLote("");
 					}
-					if (scannedData.data_fabricacao) {
-						setManualDataLote(scannedData.data_fabricacao);
-					}
-					if (scannedData.validade) {
-						setManualValidade(scannedData.validade);
+					setManualDataLote("");
+					setManualValidade("");
+
+					setShowAddItemForm(true);
+					if (parsed.item_code) {
+						await searchItem();
+						await loadBatches();
 					}
 				} else {
 					setManualItemCode(data);
 					setItCodigo(data);
+					setManualLote("");
+					setManualDataLote("");
+					setManualValidade("");
+					setShowAddItemForm(true);
 					await searchItem();
+					await loadBatches();
 				}
 			}
 		}
@@ -560,10 +567,6 @@ export function Fractioning() {
 						setContextFieldsVisible(false);
 						setItemFields({});
 						setExpandedItemId(null);
-						setLote("");
-						setQuantidadeCaixas("");
-						setOrdemProducao("");
-						setBatelada("");
 						setShowPrintModal(false);
 						setLabelQuantity("1");
 					}}

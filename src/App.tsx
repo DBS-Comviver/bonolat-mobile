@@ -1,11 +1,11 @@
+import "@core/api/interceptors";
+import { AuthProvider } from "@core/contexts/AuthContext";
+import { ThemeProvider } from "@core/contexts/ThemeContext";
+import RootNavigator from "@navigation/RootNavigator";
+import { cssInterop } from "nativewind";
 import React from "react";
 import { TextInput } from "react-native";
-import { cssInterop } from "nativewind";
 import "../global.css";
-import "@core/api/interceptors";
-import { ThemeProvider } from "@core/contexts/ThemeContext";
-import { AuthProvider } from "@core/contexts/AuthContext";
-import RootNavigator from "@navigation/RootNavigator";
 
 cssInterop(TextInput, {
     className: "style",

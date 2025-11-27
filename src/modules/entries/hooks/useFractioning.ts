@@ -11,6 +11,7 @@ import {
 	FractioningItemDetail,
 	FractioningItemResponse,
 } from "../types/fractioning";
+import { parseGS1Barcode } from "../utils/barcodeUtils";
 import { formatDate, getReadDate, getToday } from "../utils/dateUtils";
 import { createBoxItem, createFractioningItem } from "../utils/itemUtils";
 import { validateDateFields, validateItemStatus } from "../utils/validationUtils";
@@ -82,6 +83,7 @@ export function useFractioning(): UseFractioningReturn {
 	const [fractioningItems, setFractioningItems] = useState<FractioningItem[]>([]);
 	const [boxItems, setBoxItems] = useState<FractioningItem[]>([]);
 	const [boxCode, setBoxCode] = useState<string | undefined>();
+	const [extractedItemCode, setExtractedItemCode] = useState<string | undefined>();
 
 	const [showQRScanner, setShowQRScanner] = useState(false);
 	const [qrScanType, setQrScanType] = useState<"box" | "item" | "lot">("box");
@@ -216,27 +218,35 @@ export function useFractioning(): UseFractioningReturn {
 		}
 
 		const trimmedCode = boxCodeData.trim();
-		setBoxCode(trimmedCode);
 		setLoadingItem(true);
 		setItemError(undefined);
 		setFractioningItems([]);
 		setBoxItems([]);
 		setExpectedItems([]);
 
-		const scannedData = fractioningApi.parseScannedCode(trimmedCode);
-		if (scannedData && scannedData.lote) {
-			setLoteState(scannedData.lote);
+		const parsed = parseGS1Barcode(trimmedCode);
+		
+		let itemCodeToUse = trimmedCode;
+		if (parsed && parsed.item_code) {
+			itemCodeToUse = parsed.item_code;
+			setExtractedItemCode(parsed.item_code);
+			setBoxCode(parsed.item_code);
+		} else {
+			setExtractedItemCode(undefined);
+			setBoxCode(trimmedCode);
+		}
+		
+		if (parsed && parsed.lote) {
+			setLoteState(parsed.lote);
 		} else {
 			const lotMatch = trimmedCode.match(/10(\d+)/);
 			if (lotMatch) {
 				setLoteState(lotMatch[1]);
-			} else {
-				setLoteState("");
 			}
 		}
 
 		try {
-			const response = await fractioningApi.getBoxItems(trimmedCode);
+			const response = await fractioningApi.getBoxItems(itemCodeToUse);
 			if (response && response.box_code) {
 				setItemError(undefined);
 			} else {
@@ -345,8 +355,33 @@ export function useFractioning(): UseFractioningReturn {
 			return false;
 		}
 
+		if (expectedItems.length > 0) {
+			const expectedItemCodes = new Set(expectedItems.map(item => item.it_codigo));
+			const fractioningItemCodes = new Set(fractioningItems.map(item => item.it_codigo));
+			
+			const missingItems = expectedItems.filter(expected => !fractioningItemCodes.has(expected.it_codigo));
+			if (missingItems.length > 0) {
+				const missingCodes = missingItems.map(item => item.it_codigo).join(", ");
+				Alert.alert(
+					"Atenção",
+					`Nem todos os itens esperados foram inseridos.\n\nItens faltando: ${missingCodes}\n\nAdicione todos os itens esperados antes de finalizar.`
+				);
+				return false;
+			}
+		}
+
 		if (fractioningItems.length === 0) {
 			Alert.alert("Atenção", "Adicione pelo menos um item");
+			return false;
+		}
+
+		const invalidItems = fractioningItems.filter(item => item.validationStatus === "invalid");
+		if (invalidItems.length > 0) {
+			const invalidCodes = invalidItems.map(item => item.it_codigo).join(", ");
+			Alert.alert(
+				"Atenção",
+				`Existem itens com validação inválida.\n\nItens com problemas: ${invalidCodes}\n\nCorrija os problemas antes de finalizar.`
+			);
 			return false;
 		}
 
@@ -383,6 +418,17 @@ export function useFractioning(): UseFractioningReturn {
 		if (!context.cod_estabel || !context.cod_deposito || !context.cod_local) return false;
 		if (!boxCode) return false;
 		if (fractioningItems.length === 0) return false;
+
+		if (expectedItems.length > 0) {
+			const expectedItemCodes = new Set(expectedItems.map(item => item.it_codigo));
+			const fractioningItemCodes = new Set(fractioningItems.map(item => item.it_codigo));
+			
+			const missingItems = expectedItems.filter(expected => !fractioningItemCodes.has(expected.it_codigo));
+			if (missingItems.length > 0) return false;
+		}
+
+		const hasInvalidItems = fractioningItems.some(item => item.validationStatus === "invalid");
+		if (hasInvalidItems) return false;
 
 		for (const item of fractioningItems) {
 			if (item.details.length === 0) return false;
@@ -450,9 +496,11 @@ export function useFractioning(): UseFractioningReturn {
 				return sum + item.details.reduce((itemSum, detail) => itemSum + (detail.quantidade || 0), 0);
 			}, 0);
 
+			const itemCodeToUse = extractedItemCode || boxCode || fractioningItems[0]?.it_codigo || "";
+			
 			const finalizeData: FractioningFinalizeData = {
 				cod_estabel: context.cod_estabel!,
-				it_codigo: boxCode,
+				it_codigo: itemCodeToUse,
 				cod_deposito: context.cod_deposito!,
 				cod_local: context.cod_local!,
 				cod_lote: lotePrincipal,
@@ -466,14 +514,14 @@ export function useFractioning(): UseFractioningReturn {
 				const response = await fractioningApi.finalizeFractioning(finalizeData);
 
 				if (response.desc_erro && !response.desc_erro.includes("OK")) {
-					Alert.alert("Erro", `Erro ao finalizar desmontagem:\n\n${response.desc_erro}`);
+					Alert.alert("Erro", `Erro ao finalizar fracionamento:\n\n${response.desc_erro}`);
 					setLoadingFinalize(false);
 					return;
 				}
 			} catch (error: any) {
 				Alert.alert(
 					"Erro",
-					`Erro ao finalizar desmontagem:\n\n${error.response?.data?.error?.message || error.message || "Erro desconhecido"}`
+					`Erro ao finalizar fracionamento:\n\n${error.response?.data?.error?.message || error.message || "Erro desconhecido"}`
 				);
 				setLoadingFinalize(false);
 				return;
@@ -484,6 +532,7 @@ export function useFractioning(): UseFractioningReturn {
 			setFractioningItems([]);
 			setBoxItems([]);
 			setBoxCode(undefined);
+			setExtractedItemCode(undefined);
 			setLoteState("");
 			setQuantidadeCaixasState("");
 			setOrdemProducaoState("");
@@ -493,9 +542,9 @@ export function useFractioning(): UseFractioningReturn {
 			setBatches([]);
 			setItemError(undefined);
 
-			Alert.alert("Sucesso", "Desmontagem finalizada com sucesso!", [{ text: "OK" }]);
+			Alert.alert("Sucesso", "Fracionamento finalizada com sucesso!", [{ text: "OK" }]);
 		} catch (error: any) {
-			Alert.alert("Erro", error.response?.data?.error?.message || "Erro ao finalizar desmontagem");
+			Alert.alert("Erro", error.response?.data?.error?.message || "Erro ao finalizar fracionamento");
 		} finally {
 			setLoadingFinalize(false);
 		}

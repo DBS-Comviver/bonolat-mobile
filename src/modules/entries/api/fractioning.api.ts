@@ -1,21 +1,21 @@
 import { api } from "@core/api";
 import {
-    BateladasResponse,
-    BoxDetailsResponse,
-    BoxItemsResponse,
-    BoxOverview,
-    ExpectedItemsResponse,
-    FilterOptionsResponse,
-    FractioningBatchResponse,
-    FractioningBoxResponse,
-    FractioningDepositResponse,
-    FractioningFinalizeData,
-    FractioningFinalizeResponse,
-    FractioningItemResponse,
-    FractioningLocationResponse,
-    FractioningPrintPayload,
-    FractioningPrintResponse,
-    OrdersResponse,
+	BateladasResponse,
+	BoxDetailsResponse,
+	BoxItemsResponse,
+	BoxOverview,
+	ExpectedItemsResponse,
+	FilterOptionsResponse,
+	FractioningBatchResponse,
+	FractioningBoxResponse,
+	FractioningDepositResponse,
+	FractioningFinalizeData,
+	FractioningFinalizeResponse,
+	FractioningItemResponse,
+	FractioningLocationResponse,
+	FractioningPrintPayload,
+	FractioningPrintResponse,
+	OrdersResponse,
 } from "../types/fractioning";
 import { fractioningMock } from "./fractioning.mock";
 
@@ -24,13 +24,6 @@ const USE_MOCK = process.env.EXPO_PUBLIC_USE_MOCK === "true";
 export const isMockMode = USE_MOCK;
 
 export const fractioningApi = {
-	parseScannedCode: (code: string) => {
-		if (USE_MOCK) {
-			return fractioningMock.parseScannedCode(code);
-		}
-		return null;
-	},
-
 	getItem: async (it_codigo: string): Promise<FractioningItemResponse> => {
 		if (USE_MOCK) {
 			return fractioningMock.getItem(it_codigo);

@@ -165,88 +165,8 @@ const MOCK_BOX_MATERIALS: Record<string, BoxMaterialDetail[]> = {
 	],
 };
 
-const MOCK_SCANNED_CODES: Record<string, { item_code: string; lote: string; validade: string; data_fabricacao: string }> = {
-	"010123456789012310672481721250101": { item_code: "CONC-UVA-001", lote: "67248", validade: "17/12/2025", data_fabricacao: "20/10/2025" },
-	"010123456789012310667451721250101": { item_code: "CONC-UVA-001", lote: "66745", validade: "31/12/2999", data_fabricacao: "31/12/2999" },
-	"010234567890123410667471721250101": { item_code: "CONC-UVA-002", lote: "66747", validade: "31/12/2999", data_fabricacao: "31/12/2999" },
-	"010234567890123410667481721250101": { item_code: "CONC-UVA-002", lote: "66748", validade: "31/12/2999", data_fabricacao: "31/12/2999" },
-	"010345678901234510667501721250101": { item_code: "CONC-UVA-003", lote: "66750", validade: "31/12/2999", data_fabricacao: "31/12/2999" },
-	"010345678901234510667511721250101": { item_code: "CONC-UVA-003", lote: "66751", validade: "31/12/2999", data_fabricacao: "31/12/2999" },
-	"010456789012345610667531721250101": { item_code: "CONC-UVA-004", lote: "66753", validade: "31/12/2999", data_fabricacao: "31/12/2999" },
-	"010456789012345610667541721250101": { item_code: "CONC-UVA-004", lote: "66754", validade: "31/12/2999", data_fabricacao: "31/12/2999" },
-	"67248": { item_code: "CONC-UVA-001", lote: "67248", validade: "17/12/2025", data_fabricacao: "20/10/2025" },
-	"66745": { item_code: "CONC-UVA-001", lote: "66745", validade: "31/12/2999", data_fabricacao: "31/12/2999" },
-	"66747": { item_code: "CONC-UVA-002", lote: "66747", validade: "31/12/2999", data_fabricacao: "31/12/2999" },
-	"66748": { item_code: "CONC-UVA-002", lote: "66748", validade: "31/12/2999", data_fabricacao: "31/12/2999" },
-};
-
-const parseGS1Code = (code: string): { item_code?: string; lote?: string } | null => {
-	if (MOCK_SCANNED_CODES[code]) {
-		return { item_code: MOCK_SCANNED_CODES[code].item_code, lote: MOCK_SCANNED_CODES[code].lote };
-	}
-	const itemMatch = code.match(/01(\d{14})/);
-	const lotMatch = code.match(/10(\d+)/);
-	if (itemMatch || lotMatch) {
-		return { item_code: itemMatch ? itemMatch[1] : undefined, lote: lotMatch ? lotMatch[1] : undefined };
-	}
-	return null;
-};
-
-const formatDate = (dateStr: string): string => {
-	const [year, month, day] = dateStr.split("-");
-	return `${day}/${month}/${year}`;
-};
-
-const calculateValidity = (dateStr: string): string => {
-	const validadeDate = new Date(dateStr);
-	validadeDate.setFullYear(validadeDate.getFullYear() + 2);
-	return `${String(validadeDate.getDate()).padStart(2, "0")}/${String(validadeDate.getMonth() + 1).padStart(2, "0")}/${validadeDate.getFullYear()}`;
-};
 
 export const fractioningMock = {
-	parseScannedCode: (code: string): { item_code: string; lote: string; validade: string; data_fabricacao: string } | null => {
-		if (code === "3066865" && MOCK_BOXES[code]) {
-			const boxInfo = MOCK_BOXES[code];
-			const batch = MOCK_BATCHES["CONC-UVA-001"] || MOCK_BATCHES["GENERIC"] || { lote: "67248", dt_lote: "24/10/2025" };
-			if (batch.lote === boxInfo.cod_lote) {
-				return {
-					item_code: "3066865",
-					lote: boxInfo.cod_lote,
-					validade: calculateValidity(batch.dt_lote),
-					data_fabricacao: formatDate(batch.dt_lote),
-				};
-			}
-		}
-
-		const scannedData = MOCK_SCANNED_CODES[code];
-		if (scannedData) return scannedData;
-
-		const parsed = parseGS1Code(code);
-		if (parsed && parsed.item_code && parsed.lote) {
-			const batch = MOCK_BATCHES[parsed.item_code] || MOCK_BATCHES["GENERIC"] || { lote: "67248", dt_lote: "24/10/2025" };
-			if (batch.lote === parsed.lote) {
-				return {
-					item_code: parsed.item_code,
-					lote: parsed.lote,
-					validade: calculateValidity(batch.dt_lote),
-					data_fabricacao: formatDate(batch.dt_lote),
-				};
-			}
-		}
-
-		if (/^\d+$/.test(code) && code.length >= 4) {
-			const batch = MOCK_BATCHES["GENERIC"] || { lote: "67248", dt_lote: "24/10/2025" };
-			return {
-				item_code: "GENERIC",
-				lote: code,
-				validade: calculateValidity(batch.dt_lote),
-				data_fabricacao: formatDate(batch.dt_lote),
-			};
-		}
-
-		return null;
-	},
-
 	getItem: async (it_codigo: string): Promise<FractioningItemResponse> => {
 		await delay(500);
 		return MOCK_ITEMS[it_codigo] || { it_codigo, desc_item: `ITEM ${it_codigo} - DESCRIÇÃO MOCK` };
