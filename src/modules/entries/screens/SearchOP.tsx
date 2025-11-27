@@ -7,12 +7,12 @@ import { Text } from "@shared/components";
 import { DefaultLayout } from "@shared/layouts/DefaultLayout";
 import React, { useState } from "react";
 import {
-    ActivityIndicator,
-    Modal,
-    ScrollView,
-    TextInput,
-    TouchableOpacity,
-    View,
+	ActivityIndicator,
+	Modal,
+	ScrollView,
+	TextInput,
+	TouchableOpacity,
+	View,
 } from "react-native";
 import { FilterSelect, PrintLabelButton } from "../components";
 import { useSearchOP } from "../hooks/useSearchOP";
@@ -20,8 +20,8 @@ import { useSearchOP } from "../hooks/useSearchOP";
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export function SearchOP() {
-    const navigation = useNavigation<NavigationProp>();
-    const colors = useThemeColors();
+	const navigation = useNavigation<NavigationProp>();
+	const colors = useThemeColors();
 	const [filterCollapsed, setFilterCollapsed] = useState<boolean>(false);
 	const {
 		ordemProducao,
@@ -50,11 +50,11 @@ export function SearchOP() {
 		handleConfirmPrint,
 	} = useSearchOP();
 
-    const handleMenuPress = () => {
-        navigation.goBack();
-    };
+	const handleMenuPress = () => {
+		navigation.goBack();
+	};
 
-    return (
+	return (
 		<DefaultLayout headerTitle="Consulta OP" showMenu={true} onMenuPress={handleMenuPress}>
 			<ScrollView
 				contentContainerStyle={{ padding: 16 }}
@@ -306,6 +306,6 @@ export function SearchOP() {
 					</View>
 				</View>
 			</Modal>
-        </DefaultLayout>
-    );
+		</DefaultLayout>
+	);
 }

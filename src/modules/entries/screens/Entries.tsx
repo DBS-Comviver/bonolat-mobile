@@ -38,11 +38,11 @@ export function Entries() {
                 <View className="flex-row gap-4">
                     <TouchableOpacity
                         onPress={handleFractioningPress}
-                        className="rounded-2xl items-center justify-center p-8"
+                        className="rounded-2xl items-center justify-center"
                         style={{
                             backgroundColor: colors.blue[900],
-                            minWidth: 150,
-                            minHeight: 150,
+                            minWidth: 160,
+                            minHeight: 160,
                         }}
                         activeOpacity={0.8}
                     >
@@ -62,11 +62,11 @@ export function Entries() {
 
                     <TouchableOpacity
                         onPress={handleOPPress}
-                        className="rounded-2xl items-center justify-center p-8"
+                        className="rounded-2xl items-center justify-center"
                         style={{
                             backgroundColor: colors.blue[900],
-                            minWidth: 150,
-                            minHeight: 150,
+                            minWidth: 160,
+                            minHeight: 160,
                         }}
                         activeOpacity={0.8}
                     >
