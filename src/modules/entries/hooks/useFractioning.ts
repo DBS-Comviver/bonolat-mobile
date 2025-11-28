@@ -299,6 +299,11 @@ export function useFractioning(): UseFractioningReturn {
 			return;
 		}
 
+		if (!boxCode) {
+			Alert.alert("Atenção", "Informe o código da caixa");
+			return;
+		}
+
 		const qty = parseFloat(quantidadeCaixas.replace(",", "."));
 		if (isNaN(qty) || qty <= 0) {
 			Alert.alert("Atenção", "Quantidade de caixas inválida");
@@ -312,7 +317,8 @@ export function useFractioning(): UseFractioningReturn {
 				context.cod_deposito,
 				context.cod_local,
 				lote,
-				qty
+				qty,
+				boxCode
 			);
 
 			if (!data || !data.items || data.items.length === 0) {

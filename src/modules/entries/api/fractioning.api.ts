@@ -182,7 +182,8 @@ export const fractioningApi = {
 		cod_deposito: string,
 		cod_local: string,
 		cod_lote: string,
-		quantidade_caixas: number
+		quantidade: number,
+		it_codigo: string
 	): Promise<ExpectedItemsResponse> => {
 		if (USE_MOCK) {
 			return fractioningMock.getExpectedItems(
@@ -190,11 +191,12 @@ export const fractioningApi = {
 				cod_deposito,
 				cod_local,
 				cod_lote,
-				quantidade_caixas
+				quantidade,
+				it_codigo
 			);
 		}
 		const response = await api.get<ExpectedItemsResponse>("/api/fractioning/expected-items", {
-			params: { cod_estabel, cod_deposito, cod_local, cod_lote, quantidade_caixas },
+			params: { cod_estabel, cod_deposito, cod_local, cod_lote, quantidade, it_codigo },
 		});
 		return response.data;
 	},

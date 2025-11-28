@@ -419,6 +419,7 @@ export function Fractioning() {
 										...form,
 										itemCode: parsed.item_code || boxItem.it_codigo,
 										lote: parsed.lote || form.lote,
+										validade: parsed.validade || form.validade,
 									}
 									: form
 							);
@@ -432,7 +433,7 @@ export function Fractioning() {
 								id: newFormId,
 								quantidade: "",
 								lote: parsed.lote || "",
-								validade: "",
+								validade: parsed.validade || "",
 								dataFabricacao: "",
 								itemCode: parsed.item_code || boxItem.it_codigo,
 								added: false,
@@ -457,8 +458,14 @@ export function Fractioning() {
 					} else {
 						setManualLote("");
 					}
+					
+					if (parsed.validade) {
+						setManualValidade(parsed.validade);
+					} else {
+						setManualValidade("");
+					}
+					
 					setManualDataLote("");
-					setManualValidade("");
 
 					setShowAddItemForm(true);
 					if (parsed.item_code) {

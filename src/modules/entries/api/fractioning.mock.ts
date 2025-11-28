@@ -247,32 +247,33 @@ export const fractioningMock = {
 		cod_deposito: string,
 		cod_local: string,
 		cod_lote: string,
-		quantidade_caixas: number
+		quantidade: number,
+		it_codigo: string
 	): Promise<ExpectedItemsResponse> => {
 		await delay(800);
-		if (!cod_lote || quantidade_caixas <= 0) return { items: [] };
+		if (!cod_lote || quantidade <= 0) return { items: [] };
 
 		let items: ExpectedItem[] = [];
 
 		if (cod_estabel === "2202" && (cod_deposito === "SIL" || cod_deposito === "ALM" || cod_deposito === "PROD")) {
 			items = [
-				{ it_codigo: "CONC-UVA-001", desc_item: "CONCENTRADO DE UVA TINTO 1L", quant_usada: 25.0 * quantidade_caixas },
-				{ it_codigo: "CONC-UVA-002", desc_item: "CONCENTRADO DE UVA BRANCO 1L", quant_usada: 30.0 * quantidade_caixas },
-				{ it_codigo: "CONC-UVA-003", desc_item: "CONCENTRADO DE UVA ROSÉ 1L", quant_usada: 20.0 * quantidade_caixas },
-				{ it_codigo: "CONC-UVA-004", desc_item: "CONCENTRADO DE UVA INTEGRAL 1L", quant_usada: 25.0 * quantidade_caixas },
+				{ it_codigo: "CONC-UVA-001", desc_item: "CONCENTRADO DE UVA TINTO 1L", quant_usada: 25.0 * quantidade },
+				{ it_codigo: "CONC-UVA-002", desc_item: "CONCENTRADO DE UVA BRANCO 1L", quant_usada: 30.0 * quantidade },
+				{ it_codigo: "CONC-UVA-003", desc_item: "CONCENTRADO DE UVA ROSÉ 1L", quant_usada: 20.0 * quantidade },
+				{ it_codigo: "CONC-UVA-004", desc_item: "CONCENTRADO DE UVA INTEGRAL 1L", quant_usada: 25.0 * quantidade },
 			];
 		} else if (cod_lote.startsWith("672") || cod_lote.startsWith("667")) {
 			items = [
-				{ it_codigo: "CONC-UVA-001", desc_item: "CONCENTRADO DE UVA TINTO 1L", quant_usada: 25.0 * quantidade_caixas },
-				{ it_codigo: "CONC-UVA-002", desc_item: "CONCENTRADO DE UVA BRANCO 1L", quant_usada: 30.0 * quantidade_caixas },
-				{ it_codigo: "CONC-UVA-003", desc_item: "CONCENTRADO DE UVA ROSÉ 1L", quant_usada: 20.0 * quantidade_caixas },
-				{ it_codigo: "CONC-UVA-004", desc_item: "CONCENTRADO DE UVA INTEGRAL 1L", quant_usada: 25.0 * quantidade_caixas },
+				{ it_codigo: "CONC-UVA-001", desc_item: "CONCENTRADO DE UVA TINTO 1L", quant_usada: 25.0 * quantidade },
+				{ it_codigo: "CONC-UVA-002", desc_item: "CONCENTRADO DE UVA BRANCO 1L", quant_usada: 30.0 * quantidade },
+				{ it_codigo: "CONC-UVA-003", desc_item: "CONCENTRADO DE UVA ROSÉ 1L", quant_usada: 20.0 * quantidade },
+				{ it_codigo: "CONC-UVA-004", desc_item: "CONCENTRADO DE UVA INTEGRAL 1L", quant_usada: 25.0 * quantidade },
 			];
 		} else {
 			items = [
-				{ it_codigo: "00554-8", desc_item: "LEITE UHT INTEGRAL 1L", quant_usada: 12.0 * quantidade_caixas },
-				{ it_codigo: "12345-6", desc_item: "LEITE DESNATADO 1L", quant_usada: 15.0 * quantidade_caixas },
-				{ it_codigo: "67890-1", desc_item: "LEITE SEMIDESNATADO 1L", quant_usada: 10.0 * quantidade_caixas },
+				{ it_codigo: "00554-8", desc_item: "LEITE UHT INTEGRAL 1L", quant_usada: 12.0 * quantidade },
+				{ it_codigo: "12345-6", desc_item: "LEITE DESNATADO 1L", quant_usada: 15.0 * quantidade },
+				{ it_codigo: "67890-1", desc_item: "LEITE SEMIDESNATADO 1L", quant_usada: 10.0 * quantidade },
 			];
 		}
 
