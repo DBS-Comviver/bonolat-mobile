@@ -195,10 +195,17 @@ export const fractioningApi = {
 				it_codigo
 			);
 		}
-		const response = await api.get<ExpectedItemsResponse>("/api/fractioning/expected-items", {
-			params: { cod_estabel, cod_deposito, cod_local, cod_lote, quantidade, it_codigo },
+		const response = await api.get<FractioningBoxResponse>("/api/fractioning/box-return", {
+			params: { cod_estabel, it_codigo, cod_deposito, cod_local, cod_lote, quantidade },
 		});
-		return response.data;
+		const boxReturn = response.data;
+		return {
+			items: boxReturn.items.map(item => ({
+				it_codigo: item.it_codigo,
+				desc_item: item.desc_item,
+				quant_usada: item.quant_usada,
+			})),
+		};
 	},
 
 	finalizeFractioning: async (data: FractioningFinalizeData): Promise<FractioningFinalizeResponse> => {

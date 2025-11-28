@@ -205,18 +205,26 @@ export const fractioningMock = {
 				? `ERRO: Lote ${cod_lote} inválido ou não encontrado`
 				: `ERRO: Quantidade ${quantidade} excede o limite permitido`;
 			return {
-				it_codigo,
-				desc_item: MOCK_ITEMS[it_codigo]?.desc_item || `ITEM ${it_codigo}`,
-				quant_usada: quantidade.toString(),
-				mensagem: errorMsg,
+				total: 1,
+				hasNext: false,
+				items: [{
+					it_codigo,
+					desc_item: MOCK_ITEMS[it_codigo]?.desc_item || `ITEM ${it_codigo}`,
+					quant_usada: quantidade,
+					mensagem: errorMsg,
+				}],
 			};
 		}
 
 		return {
-			it_codigo,
-			desc_item: MOCK_ITEMS[it_codigo]?.desc_item || `ITEM ${it_codigo}`,
-			quant_usada: quantidade.toString(),
-			mensagem: "OK - O ITEM FOI ADICIONADO AO ESTOQUE!",
+			total: 1,
+			hasNext: false,
+			items: [{
+				it_codigo,
+				desc_item: MOCK_ITEMS[it_codigo]?.desc_item || `ITEM ${it_codigo}`,
+				quant_usada: quantidade,
+				mensagem: "OK",
+			}],
 		};
 	},
 

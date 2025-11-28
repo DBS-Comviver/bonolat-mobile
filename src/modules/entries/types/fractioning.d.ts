@@ -64,11 +64,17 @@ export interface BateladasResponse {
 	bateladas: FilterOption[];
 }
 
-export interface FractioningBoxResponse {
+export interface FractioningBoxResponseItem {
+	mensagem: string;
 	it_codigo: string;
 	desc_item: string;
-	quant_usada: string;
-	mensagem: string;
+	quant_usada: number;
+}
+
+export interface FractioningBoxResponse {
+	total: number;
+	hasNext: boolean;
+	items: FractioningBoxResponseItem[];
 }
 
 export interface FractioningFinalizeResponse {

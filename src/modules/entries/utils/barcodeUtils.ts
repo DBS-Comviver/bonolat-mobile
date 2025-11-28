@@ -56,7 +56,6 @@ export function parseGS1Barcode(code: string): ParsedBarcode | null {
 				lote = "";
 			}
 		} else {
-
 			if (after10.length >= 10) {
 				lote = after10.substring(0, 10);
 			} else {
