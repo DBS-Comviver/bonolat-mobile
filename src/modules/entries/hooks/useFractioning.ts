@@ -498,9 +498,12 @@ export function useFractioning(): UseFractioningReturn {
 
 			const dadosBaixa = dadosBaixaItems.join(";");
 			const lotePrincipal = fractioningItems[0]?.details[0]?.cod_lote || "";
-			const quantidadeTotal = fractioningItems.reduce((sum, item) => {
-				return sum + item.details.reduce((itemSum, detail) => itemSum + (detail.quantidade || 0), 0);
-			}, 0);
+			
+			const quantidadeCaixasNum = parseFloat(quantidadeCaixas.replace(",", "."));
+			if (isNaN(quantidadeCaixasNum) || quantidadeCaixasNum <= 0) {
+				setLoadingFinalize(false);
+				return;
+			}
 
 			const itemCodeToUse = extractedItemCode || boxCode || fractioningItems[0]?.it_codigo || "";
 			
@@ -510,7 +513,7 @@ export function useFractioning(): UseFractioningReturn {
 				cod_deposito: context.cod_deposito!,
 				cod_local: context.cod_local!,
 				cod_lote: lotePrincipal,
-				quantidade: quantidadeTotal,
+				quantidade: quantidadeCaixasNum,
 				dados_baixa: dadosBaixa,
 				ordem_producao: ordemProducao.trim() || undefined,
 				batelada: batelada.trim() || undefined,

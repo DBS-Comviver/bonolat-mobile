@@ -19,6 +19,7 @@ import {
 	PrintLabelButton,
 } from "../components";
 import { useFractioning } from "../hooks/useFractioning";
+import { FractioningItemResponse } from "../types/fractioning";
 import { parseGS1Barcode } from "../utils/barcodeUtils";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -263,8 +264,18 @@ export function Fractioning() {
 				updateItemDetails(existingItem.id, [...existingItem.details, newDetail]);
 			} else {
 				const itemCodeToUse = fields.itemCode || item.it_codigo;
-				const itemInfo = await fractioningApi.getItem(itemCodeToUse);
 				const boxItem = boxItems.find(bi => bi.it_codigo === itemCodeToUse);
+
+				let itemInfo: FractioningItemResponse;
+				if (boxItem) {
+					itemInfo = {
+						it_codigo: boxItem.it_codigo,
+						desc_item: boxItem.desc_item,
+					};
+				} else {
+					itemInfo = await fractioningApi.getItem(itemCodeToUse);
+				}
+				
 				const expectedQty = boxItem ? boxItem.expectedQuantity : 0;
 				await addItem(itemInfo, fields.lote, fields.dataFabricacao, quantidade, fields.validade, expectedQty);
 			}
