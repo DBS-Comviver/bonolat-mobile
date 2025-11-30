@@ -328,21 +328,6 @@ export function useFractioning(): UseFractioningReturn {
 				return;
 			}
 
-			const errorItems = data.items.filter(item => 
-				item.mensagem && item.mensagem.toUpperCase().includes("ERRO")
-			);
-
-			if (errorItems.length > 0) {
-				const errorMessages = errorItems
-					.map(item => item.mensagem)
-					.filter((msg): msg is string => !!msg)
-					.join('\n');
-				Alert.alert("Erro", errorMessages);
-				setExpectedItems([]);
-				setBoxItems([]);
-				return;
-			}
-
 			setExpectedItems(data.items);
 
 			const boxReadDate = getReadDate();
@@ -356,7 +341,7 @@ export function useFractioning(): UseFractioningReturn {
 			setFractioningItems([]);
 		} catch (error: any) {
 			console.error("Erro ao buscar itens esperados:", error);
-			const errorMessage = error?.response?.data?.error?.message || error?.message || "Erro ao buscar itens esperados";
+			const errorMessage = error?.response?.data?.message || error?.response?.data?.error?.message || error?.message || "Erro ao buscar itens esperados";
 			Alert.alert("Erro", errorMessage);
 			setExpectedItems([]);
 			setBoxItems([]);
@@ -536,26 +521,9 @@ export function useFractioning(): UseFractioningReturn {
 
 			try {
 				const response = await fractioningApi.finalizeFractioning(finalizeData);
-
-				if (response.items && response.items.length > 0) {
-					const errorItems = response.items.filter(item => 
-						item.mensagem && !item.mensagem.toUpperCase().includes("OK")
-					);
-					
-					if (errorItems.length > 0) {
-						const errorMessages = errorItems.map(item => 
-							`${item.it_codigo || 'Item'}: ${item.mensagem}`
-						).join('\n');
-						Alert.alert("Erro", `Erro ao finalizar fracionamento:\n\n${errorMessages}`);
-						setLoadingFinalize(false);
-						return;
-					}
-				}
 			} catch (error: any) {
-				Alert.alert(
-					"Erro",
-					`Erro ao finalizar fracionamento:\n\n${error.response?.data?.error?.message || error.message || "Erro desconhecido"}`
-				);
+				const errorMessage = error?.response?.data?.message || error?.response?.data?.error?.message || error?.message || "Erro ao finalizar fracionamento";
+				Alert.alert("Erro", errorMessage);
 				setLoadingFinalize(false);
 				return;
 			}
@@ -577,7 +545,8 @@ export function useFractioning(): UseFractioningReturn {
 
 			Alert.alert("Sucesso", "Fracionamento finalizada com sucesso!", [{ text: "OK" }]);
 		} catch (error: any) {
-			Alert.alert("Erro", error.response?.data?.error?.message || "Erro ao finalizar fracionamento");
+			const errorMessage = error?.response?.data?.message || error?.response?.data?.error?.message || error?.message || "Erro ao finalizar fracionamento";
+			Alert.alert("Erro", errorMessage);
 		} finally {
 			setLoadingFinalize(false);
 		}
