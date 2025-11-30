@@ -328,6 +328,21 @@ export function useFractioning(): UseFractioningReturn {
 				return;
 			}
 
+			const errorItems = data.items.filter(item => 
+				item.mensagem && item.mensagem.toUpperCase().includes("ERRO")
+			);
+
+			if (errorItems.length > 0) {
+				const errorMessages = errorItems
+					.map(item => item.mensagem)
+					.filter((msg): msg is string => !!msg)
+					.join('\n');
+				Alert.alert("Erro", errorMessages);
+				setExpectedItems([]);
+				setBoxItems([]);
+				return;
+			}
+
 			setExpectedItems(data.items);
 
 			const boxReadDate = getReadDate();
@@ -522,10 +537,19 @@ export function useFractioning(): UseFractioningReturn {
 			try {
 				const response = await fractioningApi.finalizeFractioning(finalizeData);
 
-				if (response.desc_erro && !response.desc_erro.includes("OK")) {
-					Alert.alert("Erro", `Erro ao finalizar fracionamento:\n\n${response.desc_erro}`);
-					setLoadingFinalize(false);
-					return;
+				if (response.items && response.items.length > 0) {
+					const errorItems = response.items.filter(item => 
+						item.mensagem && !item.mensagem.toUpperCase().includes("OK")
+					);
+					
+					if (errorItems.length > 0) {
+						const errorMessages = errorItems.map(item => 
+							`${item.it_codigo || 'Item'}: ${item.mensagem}`
+						).join('\n');
+						Alert.alert("Erro", `Erro ao finalizar fracionamento:\n\n${errorMessages}`);
+						setLoadingFinalize(false);
+						return;
+					}
 				}
 			} catch (error: any) {
 				Alert.alert(

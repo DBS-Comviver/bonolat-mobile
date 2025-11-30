@@ -77,8 +77,17 @@ export interface FractioningBoxResponse {
 	items: FractioningBoxResponseItem[];
 }
 
+export interface FractioningFinalizeResponseItem {
+	mensagem: string;
+	it_codigo: string;
+	desc_item: string;
+	quant_usada: number;
+}
+
 export interface FractioningFinalizeResponse {
-	desc_erro: string;
+	total: number;
+	hasNext: boolean;
+	items: FractioningFinalizeResponseItem[];
 }
 
 export interface FractioningContext {
@@ -157,6 +166,7 @@ export interface ExpectedItem {
 	it_codigo: string;
 	desc_item: string;
 	quant_usada: number;
+	mensagem?: string;
 }
 
 export interface ExpectedItemsResponse {

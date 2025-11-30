@@ -92,7 +92,9 @@ describe('fractioningMock', () => {
 			const result = await fractioningMock.finalizeFractioning(data);
 
 			expect(result).toBeDefined();
-			expect(result.desc_erro).toContain('OK');
+			expect(result.items).toBeDefined();
+			expect(result.items.length).toBeGreaterThan(0);
+			expect(result.items[0].mensagem).toContain('OK');
 		});
 
 		it('should return error for missing required fields', async () => {
@@ -108,7 +110,9 @@ describe('fractioningMock', () => {
 
 			const result = await fractioningMock.finalizeFractioning(data);
 
-			expect(result.desc_erro).toContain('ERRO');
+			expect(result.items).toBeDefined();
+			expect(result.items.length).toBeGreaterThan(0);
+			expect(result.items[0].mensagem).toContain('ERRO');
 		});
 
 		it('should validate date format', async () => {
@@ -124,8 +128,10 @@ describe('fractioningMock', () => {
 
 			const result = await fractioningMock.finalizeFractioning(data);
 
-			expect(result.desc_erro).toContain('ERRO');
-			expect(result.desc_erro).toContain('data');
+			expect(result.items).toBeDefined();
+			expect(result.items.length).toBeGreaterThan(0);
+			expect(result.items[0].mensagem).toContain('ERRO');
+			expect(result.items[0].mensagem).toContain('data');
 		});
 	});
 

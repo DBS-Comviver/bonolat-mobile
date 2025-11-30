@@ -317,7 +317,16 @@ export const fractioningMock = {
 	finalizeFractioning: async (data: FractioningFinalizeData): Promise<FractioningFinalizeResponse> => {
 		await delay(1000);
 		if (!data.cod_estabel || !data.it_codigo || !data.cod_deposito || !data.cod_local || !data.cod_lote || !data.quantidade || !data.dados_baixa) {
-			return { desc_erro: "ERRO: Campos obrigatórios não preenchidos" };
+			return {
+				total: 1,
+				hasNext: false,
+				items: [{
+					mensagem: "ERRO: Campos obrigatórios não preenchidos",
+					it_codigo: "",
+					desc_item: "",
+					quant_usada: 0,
+				}],
+			};
 		}
 
 		const items = data.dados_baixa.split(";");
@@ -326,15 +335,42 @@ export const fractioningMock = {
 		for (const item of items) {
 			const parts = item.split(",");
 			if (parts.length !== 5) {
-				return { desc_erro: `ERRO: Formato inválido no item: ${item}` };
+				return {
+					total: 1,
+					hasNext: false,
+					items: [{
+						mensagem: `ERRO: Formato inválido no item: ${item}`,
+						it_codigo: "",
+						desc_item: "",
+						quant_usada: 0,
+					}],
+				};
 			}
 			const [, , , dataFabricacao, validade] = parts;
 			if (!dateRegex.test(validade) || !dateRegex.test(dataFabricacao)) {
-				return { desc_erro: "ERRO: Formato de data inválido. Use DD/MM/AAAA" };
+				return {
+					total: 1,
+					hasNext: false,
+					items: [{
+						mensagem: "ERRO: Formato de data inválido. Use DD/MM/AAAA",
+						it_codigo: "",
+						desc_item: "",
+						quant_usada: 0,
+					}],
+				};
 			}
 		}
 
-		return { desc_erro: "OK - O ITEM FOI ADICIONADO AO ESTOQUE!" };
+		return {
+			total: 1,
+			hasNext: false,
+			items: [{
+				mensagem: "OK - O ITEM FOI ADICIONADO AO ESTOQUE!",
+				it_codigo: data.it_codigo,
+				desc_item: MOCK_ITEMS[data.it_codigo]?.desc_item || `ITEM ${data.it_codigo}`,
+				quant_usada: data.quantidade,
+			}],
+		};
 	},
 
 	printLabels: async (data: FractioningPrintPayload): Promise<FractioningPrintResponse> => {

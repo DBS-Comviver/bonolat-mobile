@@ -204,6 +204,7 @@ export const fractioningApi = {
 				it_codigo: item.it_codigo,
 				desc_item: item.desc_item,
 				quant_usada: item.quant_usada,
+				mensagem: item.mensagem,
 			})),
 		};
 	},
