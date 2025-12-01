@@ -10,25 +10,22 @@ export function FinalizeResultModal({ visible, response, boxCode, fractioningIte
 	const [loadingBoxName, setLoadingBoxName] = useState(false);
 
 	useEffect(() => {
-		if (visible && boxCode && response?.items && response.items.length > 0) {
-			const firstItemCode = response.items[0]?.it_codigo;
-			if (firstItemCode) {
-				setLoadingBoxName(true);
-				fractioningApi.getItem(firstItemCode)
-					.then((itemInfo) => {
-						setBoxName(itemInfo.desc_item || boxCode);
-					})
-					.catch(() => {
-						setBoxName(boxCode);
-					})
-					.finally(() => {
-						setLoadingBoxName(false);
-					});
-			} else {
-				setBoxName(boxCode);
-			}
+		if (visible && boxCode) {
+			setLoadingBoxName(true);
+			fractioningApi.getItem(boxCode)
+				.then((itemInfo) => {
+					setBoxName(itemInfo.desc_item || boxCode);
+				})
+				.catch(() => {
+					setBoxName(boxCode);
+				})
+				.finally(() => {
+					setLoadingBoxName(false);
+				});
+		} else {
+			setBoxName("");
 		}
-	}, [visible, boxCode, response]);
+	}, [visible, boxCode]);
 
 	if (!response || !response.items || response.items.length === 0) {
 		return null;
