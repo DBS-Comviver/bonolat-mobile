@@ -8,8 +8,10 @@ export { ContextFields } from "./ContextFields";
 export { ContextSection } from "./ContextSection";
 export { FilterSelect } from "./FilterSelect";
 export { FinalizeButton } from "./FinalizeButton";
+export { FinalizeResultModal } from "./FinalizeResultModal";
 export { FractionedItemsTable } from "./FractionedItemsTable";
 export { LotAndBoxQuantityInput } from "./LotAndBoxQuantityInput";
 export { MockModeBanner } from "./MockModeBanner";
 export { PrintLabelButton } from "./PrintLabelButton";
 export { QuantityValidation } from "./QuantityValidation";
+

@@ -1,3 +1,7 @@
+import { Paths, File } from "expo-file-system";
+import * as Sharing from "expo-sharing";
+import * as Linking from "expo-linking";
+import { Platform } from "react-native";
 import { useEffect, useState } from "react";
 import { Alert, Keyboard } from "react-native";
 import { fractioningApi } from "../api/fractioning.api";
@@ -167,7 +171,7 @@ export function useSearchOP(): UseSearchOPReturn {
 
 		setLoadingPrint(true);
 		try {
-			const response = await fractioningApi.printLabels({
+			const zplCode = await fractioningApi.printLabels({
 				cod_estabel,
 				cod_deposito,
 				cod_local,
@@ -176,12 +180,48 @@ export function useSearchOP(): UseSearchOPReturn {
 				batelada,
 				quantidade: quantity,
 			});
-			Alert.alert("Impressão", response.message || `Solicitadas ${quantity} etiqueta(s)`);
+
+			const filename = `etiqueta_${box_code}_${Date.now()}.txt`;
+			const file = new File(Paths.cache, filename);
+			await file.write(zplCode);
+			const fileUri = file.uri;
+
+			const isAvailable = await Sharing.isAvailableAsync();
+			
+			if (isAvailable) {
+				await Sharing.shareAsync(fileUri, {
+					mimeType: 'text/plain',
+					dialogTitle: 'Imprimir Etiqueta',
+				});
+				
+				Alert.alert(
+					"Sucesso",
+					`Arquivo de etiqueta gerado! Escolha o aplicativo de impressão para imprimir ${quantity} etiqueta(s).`
+				);
+			} else {
+				if (Platform.OS === 'android') {
+					try {
+						await Linking.openURL(fileUri);
+					} catch {
+						Alert.alert(
+							"Arquivo Salvo",
+							`Arquivo ZPL salvo em: ${fileUri}\n\nAbra manualmente com um aplicativo de impressão.`
+						);
+					}
+				} else {
+					Alert.alert(
+						"Arquivo Salvo",
+						`Arquivo de etiqueta salvo em: ${fileUri}\n\nAbra manualmente com um aplicativo de impressão.`
+					);
+				}
+			}
+
 			setShowPrintModal(false);
 			setLabelQuantity("1");
 			setSelectedPrintBox(null);
 		} catch (error: any) {
-			Alert.alert("Erro", error.message || "Erro ao imprimir etiquetas");
+			const errorMessage = error.response?.data?.error?.message || error.message || "Erro ao imprimir etiquetas";
+			Alert.alert("Erro", errorMessage);
 		} finally {
 			setLoadingPrint(false);
 		}

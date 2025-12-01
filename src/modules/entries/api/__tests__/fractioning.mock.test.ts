@@ -136,7 +136,7 @@ describe('fractioningMock', () => {
 	});
 
 	describe('printLabels', () => {
-		it('should return success for valid payload', async () => {
+		it('should return ZPL code for valid payload', async () => {
 			const payload = {
 				cod_estabel: '2202',
 				cod_deposito: 'SIL',
@@ -149,8 +149,12 @@ describe('fractioningMock', () => {
 
 			const result = await fractioningMock.printLabels(payload);
 
-			expect(result.success).toBe(true);
-			expect(result.message).toContain('2 etiqueta');
+			expect(typeof result).toBe('string');
+			expect(result).toContain('^XA');
+			expect(result).toContain('^XZ');
+			expect(result).toContain('15478788');
+			expect(result).toContain('BAT-001');
+			expect(result).toContain('1547');
 		});
 
 		it('should throw error for invalid quantity', async () => {

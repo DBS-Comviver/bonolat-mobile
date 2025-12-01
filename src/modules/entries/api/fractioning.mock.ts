@@ -14,7 +14,6 @@ import {
 	FractioningItemResponse,
 	FractioningLocationResponse,
 	FractioningPrintPayload,
-	FractioningPrintResponse,
 } from "../types/fractioning";
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -373,15 +372,36 @@ export const fractioningMock = {
 		};
 	},
 
-	printLabels: async (data: FractioningPrintPayload): Promise<FractioningPrintResponse> => {
+	printLabels: async (data: FractioningPrintPayload): Promise<string> => {
 		await delay(600);
 		if (!data.quantidade || data.quantidade <= 0) {
 			throw new Error("Quantidade inválida para impressão");
 		}
 
-		return {
-			success: true,
-			message: `Solicitação recebida para imprimir ${data.quantidade} etiqueta(s).`,
-		};
+		const now = new Date();
+		const day = String(now.getDate()).padStart(2, "0");
+		const month = String(now.getMonth() + 1).padStart(2, "0");
+		const year = String(now.getFullYear()).slice(-2);
+		const batelada = data.batelada || "00000";
+		const ordem = data.ordem_producao || "00000";
+
+		const zplLabels: string[] = [];
+		
+		for (let i = 0; i < data.quantidade; i++) {
+			const label = [
+				"^XA",
+				"^CF0,40",
+				`^FO30,40^FD Batelada: ${batelada} OP: ${ordem} ^FS`,
+				`^FO30,90^FD Caixa: ${data.box_code} ^FS`,
+				"^FO150,120",
+				"^BQN,2,10",
+				`^FDLA,Batelada:${batelada}|OP:${ordem}|Caixa:${data.box_code}|Data:${day}-${month}-${year}^FS`,
+				"^XZ",
+			].join("\n");
+			
+			zplLabels.push(label);
+		}
+
+		return zplLabels.join("\n");
 	},
 };

@@ -18,9 +18,75 @@ export interface FractioningBatchResponse {
 	dt_lote: string;
 }
 
+export interface FractioningBoxResponseItem {
+	mensagem: string;
+	it_codigo: string;
+	desc_item: string;
+	quant_usada: number;
+}
+
+export interface FractioningBoxResponse {
+	total: number;
+	hasNext: boolean;
+	items: FractioningBoxResponseItem[];
+}
+
+export interface FractioningFinalizeResponseItem {
+	mensagem: string;
+	it_codigo: string;
+	desc_item: string;
+	quant_usada: number;
+}
+
+export interface FractioningFinalizeResponse {
+	total: number;
+	hasNext: boolean;
+	items: FractioningFinalizeResponseItem[];
+}
+
+export interface BoxItem {
+	it_codigo: string;
+	desc_item: string;
+	quantidade_esperada: number;
+}
+
+export interface BoxItemsResponse {
+	box_code: string;
+	box_description: string;
+	total_quantity: number;
+	cod_estabel?: string;
+	cod_deposito?: string;
+	cod_local?: string;
+	items: BoxItem[];
+}
+
+export interface ExpectedItem {
+	it_codigo: string;
+	desc_item: string;
+	quant_usada: number;
+	mensagem?: string;
+}
+
+export interface ExpectedItemsResponse {
+	items: ExpectedItem[];
+}
+
 export interface FilterOption {
 	label: string;
 	value: string;
+}
+
+export interface FilterOptionsResponse {
+	ordens: FilterOption[];
+	bateladas: FilterOption[];
+}
+
+export interface OrdersResponse {
+	ordens: FilterOption[];
+}
+
+export interface BateladasResponse {
+	bateladas: FilterOption[];
 }
 
 export interface BoxOverview {
@@ -49,45 +115,6 @@ export interface BoxMaterialDetail {
 export interface BoxDetailsResponse {
 	box_code: string;
 	materials: BoxMaterialDetail[];
-}
-
-export interface FilterOptionsResponse {
-	ordens: FilterOption[];
-	bateladas: FilterOption[];
-}
-
-export interface OrdersResponse {
-	ordens: FilterOption[];
-}
-
-export interface BateladasResponse {
-	bateladas: FilterOption[];
-}
-
-export interface FractioningBoxResponseItem {
-	mensagem: string;
-	it_codigo: string;
-	desc_item: string;
-	quant_usada: number;
-}
-
-export interface FractioningBoxResponse {
-	total: number;
-	hasNext: boolean;
-	items: FractioningBoxResponseItem[];
-}
-
-export interface FractioningFinalizeResponseItem {
-	mensagem: string;
-	it_codigo: string;
-	desc_item: string;
-	quant_usada: number;
-}
-
-export interface FractioningFinalizeResponse {
-	total: number;
-	hasNext: boolean;
-	items: FractioningFinalizeResponseItem[];
 }
 
 export interface FractioningContext {
@@ -139,36 +166,4 @@ export interface FractioningPrintPayload {
 	ordem_producao?: string;
 	batelada?: string;
 	quantidade: number;
-}
-
-export interface FractioningPrintResponse {
-	success: boolean;
-	message?: string;
-}
-
-export interface BoxItem {
-	it_codigo: string;
-	desc_item: string;
-	quantidade_esperada: number;
-}
-
-export interface BoxItemsResponse {
-	box_code: string;
-	box_description: string;
-	total_quantity: number;
-	cod_estabel?: string;
-	cod_deposito?: string;
-	cod_local?: string;
-	items: BoxItem[];
-}
-
-export interface ExpectedItem {
-	it_codigo: string;
-	desc_item: string;
-	quant_usada: number;
-	mensagem?: string;
-}
-
-export interface ExpectedItemsResponse {
-	items: ExpectedItem[];
 }

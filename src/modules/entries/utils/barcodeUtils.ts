@@ -56,22 +56,22 @@ export function parseGS1Barcode(code: string): ParsedBarcode | null {
 				lote = "";
 			}
 		} else {
-			if (after10.length >= 10) {
-				lote = after10.substring(0, 10);
+		if (after10.length >= 10) {
+			lote = after10.substring(0, 10);
+		} else {
+			const nextIdentifierPattern = /(1[5-9]|2[0-9]|9[0-9])/;
+			const nextIdMatch = after10.search(nextIdentifierPattern);
+			
+			if (nextIdMatch > 0) {
+				lote = after10.substring(0, nextIdMatch);
 			} else {
-				const nextIdentifierPattern = /(1[5-9]|2[0-9]|9[0-9])/;
-				const nextIdMatch = after10.search(nextIdentifierPattern);
-				
-				if (nextIdMatch > 0) {
-					lote = after10.substring(0, nextIdMatch);
-				} else {
-					lote = after10;
+				lote = after10;
 				}
 			}
-		}
-		
-		if (lote && lote.length > 0) {
-			lote = lote.padStart(10, '0');
+			}
+			
+			if (lote && lote.length > 0) {
+				lote = lote.padStart(10, '0');
 		}
 	}
 

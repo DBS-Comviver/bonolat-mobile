@@ -1,7 +1,7 @@
 import { renderHook, waitFor } from '@testing-library/react-native';
 import { Alert } from 'react-native';
-import { useSearchOP } from '../useSearchOP';
 import { fractioningApi } from '../../api/fractioning.api';
+import { useSearchOP } from '../useSearchOP';
 
 jest.mock('../../api/fractioning.api');
 jest.mock('react-native', () => ({
@@ -173,12 +173,20 @@ describe('useSearchOP', () => {
 	});
 
 	it('should handle print label', async () => {
-		const mockResponse = {
-			success: true,
-			message: 'Solicitação recebida para imprimir 2 etiqueta(s).',
-		};
+		const mockZplCode = "^XA^CF0,40^FO30,40^FD Batelada: BAT-001 OP: 1547 ^FS^FO30,90^FD Caixa: 15478788 ^FS^FO150,120^BQN,2,10^FDLA,Batelada:BAT-001|OP:1547|Caixa:15478788|Data:01-01-24^FS^XZ";
 
-		(fractioningApi.printLabels as jest.Mock) = jest.fn().mockResolvedValue(mockResponse);
+		(fractioningApi.printLabels as jest.Mock) = jest.fn().mockResolvedValue(mockZplCode);
+
+		jest.mock('expo-file-system', () => ({
+			documentDirectory: 'file:///test/',
+			EncodingType: { UTF8: 'utf8' },
+			writeAsStringAsync: jest.fn().mockResolvedValue(undefined),
+		}));
+		
+		jest.mock('expo-sharing', () => ({
+			isAvailableAsync: jest.fn().mockResolvedValue(true),
+			shareAsync: jest.fn().mockResolvedValue(undefined),
+		}));
 
 		const { result } = renderHook(() => useSearchOP());
 

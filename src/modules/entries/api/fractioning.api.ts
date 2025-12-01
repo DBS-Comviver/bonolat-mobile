@@ -14,7 +14,6 @@ import {
 	FractioningItemResponse,
 	FractioningLocationResponse,
 	FractioningPrintPayload,
-	FractioningPrintResponse,
 	OrdersResponse,
 } from "../types/fractioning";
 import { fractioningMock } from "./fractioning.mock";
@@ -220,13 +219,16 @@ export const fractioningApi = {
 		return response.data;
 	},
 
-	printLabels: async (payload: FractioningPrintPayload): Promise<FractioningPrintResponse> => {
+	printLabels: async (payload: FractioningPrintPayload): Promise<string> => {
 		if (USE_MOCK) {
 			return fractioningMock.printLabels(payload);
 		}
-		const response = await api.post<FractioningPrintResponse>(
+		const response = await api.post<string>(
 			"/api/fractioning/print-labels",
-			payload
+			payload,
+			{
+				responseType: 'text',
+			}
 		);
 		return response.data;
 	},

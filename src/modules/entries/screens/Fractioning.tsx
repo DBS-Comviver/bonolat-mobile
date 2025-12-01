@@ -4,8 +4,11 @@ import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Text } from "@shared/components";
 import { DefaultLayout } from "@shared/layouts/DefaultLayout";
+import { File, Paths } from "expo-file-system";
+import * as Linking from "expo-linking";
+import * as Sharing from "expo-sharing";
 import React, { useState } from "react";
-import { ActivityIndicator, Alert, Modal, ScrollView, TextInput, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Alert, Modal, Platform, ScrollView, TextInput, TouchableOpacity, View } from "react-native";
 import { fractioningApi, isMockMode } from "../api/fractioning.api";
 import {
 	AddItemForm,
@@ -14,6 +17,7 @@ import {
 	CodeScanner,
 	ContextSection,
 	FinalizeButton,
+	FinalizeResultModal,
 	FractionedItemsTable,
 	MockModeBanner,
 	PrintLabelButton,
@@ -84,6 +88,10 @@ export function Fractioning() {
 		canFinalize,
 		finalizeFractioning,
 		loadingFinalize,
+		showFinalizeModal,
+		setShowFinalizeModal,
+		finalizeResponse,
+		clearAllStates: clearFractioningStates,
 		deleteItem,
 		lote,
 		quantidadeCaixas,
@@ -99,6 +107,7 @@ export function Fractioning() {
 	} = useFractioning();
 
 	const clearAllStates = () => {
+		clearFractioningStates();
 		setItemFields({});
 		setExpandedItemId(null);
 		setShowAddItemForm(false);
@@ -531,7 +540,7 @@ export function Fractioning() {
 
 		setLoadingPrint(true);
 		try {
-			const response = await fractioningApi.printLabels({
+			const zplCode = await fractioningApi.printLabels({
 				cod_estabel,
 				cod_deposito,
 				cod_local,
@@ -541,11 +550,46 @@ export function Fractioning() {
 				quantidade: quantity,
 			});
 
-			Alert.alert("Impressão", response.message || `Solicitadas ${quantity} etiqueta(s)`);
+			const filename = `etiqueta_${boxCode}_${Date.now()}.txt`;
+			const file = new File(Paths.cache, filename);
+			await file.write(zplCode);
+			const fileUri = file.uri;
+
+			const isAvailable = await Sharing.isAvailableAsync();
+			
+			if (isAvailable) {
+				await Sharing.shareAsync(fileUri, {
+					mimeType: 'text/plain',
+					dialogTitle: 'Imprimir Etiqueta',
+				});
+				
+				Alert.alert(
+					"Sucesso",
+					`Arquivo de etiqueta gerado! Escolha o aplicativo de impressão para imprimir ${quantity} etiqueta(s).`
+				);
+			} else {
+				if (Platform.OS === 'android') {
+					try {
+						await Linking.openURL(fileUri);
+					} catch {
+						Alert.alert(
+							"Arquivo Salvo",
+							`Arquivo ZPL salvo em: ${fileUri}\n\nAbra manualmente com um aplicativo de impressão.`
+						);
+					}
+				} else {
+					Alert.alert(
+						"Arquivo Salvo",
+						`Arquivo de etiqueta salvo em: ${fileUri}\n\nAbra manualmente com um aplicativo de impressão.`
+					);
+				}
+			}
+
 			setShowPrintModal(false);
 			setLabelQuantity("1");
 		} catch (error: any) {
-			Alert.alert("Erro", error.response?.data?.error?.message || error.message || "Erro ao imprimir etiquetas");
+			const errorMessage = error.response?.data?.error?.message || error.message || "Erro ao imprimir etiquetas";
+			Alert.alert("Erro", errorMessage);
 		} finally {
 			setLoadingPrint(false);
 		}
@@ -687,7 +731,7 @@ export function Fractioning() {
 
 				{boxItems.length > 0 && contextFieldsLocked && cod_estabel && cod_deposito && cod_local && (
 					<View className="mb-4">
-						{!showAddItemForm && (
+						{/* {!showAddItemForm && (
 							<TouchableOpacity
 								onPress={() => setShowAddItemForm(true)}
 								className="p-3 rounded-lg flex-row items-center justify-center mb-3"
@@ -697,7 +741,7 @@ export function Fractioning() {
 									Adicionar Item
 								</Text>
 							</TouchableOpacity>
-						)}
+						)} */}
 						<AddItemForm
 							visible={showAddItemForm}
 							itemCode={manualItemCode}
@@ -749,7 +793,6 @@ export function Fractioning() {
 							loading={loadingFinalize}
 							onPress={async () => {
 								await finalizeFractioning();
-								clearAllStates();
 							}}
 						/>
 					</>
@@ -833,6 +876,17 @@ export function Fractioning() {
 				onScan={handleQRScanData}
 				onClose={closeQRScanner}
 				title="Escaneie o código"
+			/>
+
+			<FinalizeResultModal
+				visible={showFinalizeModal}
+				response={finalizeResponse}
+				boxCode={boxCode}
+				fractioningItems={fractioningItems}
+				onClose={() => {
+					setShowFinalizeModal(false);
+					clearAllStates();
+				}}
 			/>
 		</DefaultLayout>
 	);

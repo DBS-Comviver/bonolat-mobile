@@ -7,6 +7,7 @@ import {
 	ExpectedItem,
 	FractioningBatchResponse,
 	FractioningFinalizeData,
+	FractioningFinalizeResponse,
 	FractioningItem,
 	FractioningItemDetail,
 	FractioningItemResponse,
@@ -69,6 +70,10 @@ interface UseFractioningReturn {
 	canFinalize: () => boolean;
 	finalizeFractioning: () => Promise<void>;
 	loadingFinalize: boolean;
+	showFinalizeModal: boolean;
+	setShowFinalizeModal: (show: boolean) => void;
+	finalizeResponse: FractioningFinalizeResponse | null;
+	clearAllStates: () => void;
 }
 
 export function useFractioning(): UseFractioningReturn {
@@ -89,6 +94,8 @@ export function useFractioning(): UseFractioningReturn {
 	const [qrScanType, setQrScanType] = useState<"box" | "item" | "lot">("box");
 
 	const [loadingFinalize, setLoadingFinalize] = useState(false);
+	const [showFinalizeModal, setShowFinalizeModal] = useState(false);
+	const [finalizeResponse, setFinalizeResponse] = useState<FractioningFinalizeResponse | null>(null);
 
 	const [lote, setLoteState] = useState<string>("");
 	const [quantidadeCaixas, setQuantidadeCaixasState] = useState<string>("");
@@ -519,37 +526,33 @@ export function useFractioning(): UseFractioningReturn {
 				batelada: batelada.trim() || undefined,
 			};
 
-			try {
 				const response = await fractioningApi.finalizeFractioning(finalizeData);
-			} catch (error: any) {
-				const errorMessage = error?.response?.data?.message || error?.response?.data?.error?.message || error?.message || "Erro ao finalizar fracionamento";
-				Alert.alert("Erro", errorMessage);
-				setLoadingFinalize(false);
-				return;
-			}
 
-			setItCodigo(undefined);
+			setFinalizeResponse(response);
+			setShowFinalizeModal(true);
+			} catch (error: any) {
+			const errorMessage = error?.response?.data?.message || error?.response?.data?.error?.message || error?.message || "Erro ao finalizar fracionamento";
+			Alert.alert("Erro", errorMessage);
+		} finally {
+				setLoadingFinalize(false);
+			}
+	};
+
+	const clearAllStates = () => {
+		setItCodigoState(undefined);
 			setItemInfo(null);
+		setItemError(undefined);
+		setBatches([]);
 			setFractioningItems([]);
 			setBoxItems([]);
+		setExpectedItems([]);
 			setBoxCode(undefined);
 			setExtractedItemCode(undefined);
 			setLoteState("");
 			setQuantidadeCaixasState("");
 			setOrdemProducaoState("");
 			setBateladaState("");
-			setExpectedItems([]);
 			context.reset();
-			setBatches([]);
-			setItemError(undefined);
-
-			Alert.alert("Sucesso", "Fracionamento finalizada com sucesso!", [{ text: "OK" }]);
-		} catch (error: any) {
-			const errorMessage = error?.response?.data?.message || error?.response?.data?.error?.message || error?.message || "Erro ao finalizar fracionamento";
-			Alert.alert("Erro", errorMessage);
-		} finally {
-			setLoadingFinalize(false);
-		}
 	};
 
 	return {
@@ -588,6 +591,10 @@ export function useFractioning(): UseFractioningReturn {
 		canFinalize,
 		finalizeFractioning,
 		loadingFinalize,
+		showFinalizeModal,
+		setShowFinalizeModal,
+		finalizeResponse,
+		clearAllStates,
 		lote,
 		quantidadeCaixas,
 		ordemProducao,
